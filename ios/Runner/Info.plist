@@ -29,7 +29,8 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<key>NSCameraUsageDescription</key>
     <string>Camera permission is required for barcode scanning.</string>
-
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs access to location when open.</string>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
