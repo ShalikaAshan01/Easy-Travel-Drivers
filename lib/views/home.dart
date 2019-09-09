@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:connectivity/connectivity.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:flutter/services.dart';
+
 
 class Home extends StatefulWidget {
 
@@ -22,6 +26,13 @@ class _Home extends State<Home> {
   Placemark _placemark;
   String _address = '';
 
+  final Connectivity _connectivity = Connectivity();
+
+  StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
+  /// the internet connectivity status
+  bool isOnline = true;
+
   GoogleMapController mapController;
   Set<Marker> markers = Set();
   LatLng _latLng =LatLng(7.8731,80.7718);
@@ -30,6 +41,31 @@ class _Home extends State<Home> {
   void initState() {
     super.initState();
     _listening();
+    initConnectivity();
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) async {
+      await _updateConnectionStatus().then((bool isConnected) => setState(() {
+        isOnline = isConnected;
+        if(!isConnected){
+          Alert(
+            context: context,
+            title: "Whoops",
+            desc: "Slow or no internet connection. Please check internet connection",
+            buttons: [
+              DialogButton(
+                child: Text(
+                  "Ok",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+                onPressed: () => Navigator.pop(context),
+                width: 120,
+              )
+            ],
+          ).show();
+        }
+      }));
+    });
   }
 
   @override
@@ -199,6 +235,43 @@ class _Home extends State<Home> {
         ),
       ),
     );
+  }
+
+  /// initialize connectivity checking
+  /// Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initConnectivity() async {
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      await _connectivity.checkConnectivity();
+    } on PlatformException catch (e) {
+      print(e.toString());
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) {
+      return;
+    }
+
+    await _updateConnectionStatus().then((bool isConnected) => setState(() {
+      isOnline = isConnected;
+    }));
+  }
+
+  Future<bool> _updateConnectionStatus() async {
+    bool isConnected;
+    try {
+      final List<InternetAddress> result =
+      await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        isConnected = true;
+      }
+    } on SocketException catch (_) {
+      isConnected = false;
+      return false;
+    }
+    return isConnected;
   }
 }
 

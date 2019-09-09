@@ -28,6 +28,7 @@ dependencies:
   google_maps_flutter: ^0.5.21
   permission_handler: ^3.2.2
   rflutter_alert: ^1.0.3
+  connectivity: ^0.4.4
 
 dev_dependencies:
   flutter_test:
