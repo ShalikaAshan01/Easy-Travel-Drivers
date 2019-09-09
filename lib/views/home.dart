@@ -64,11 +64,11 @@ class _Home extends State<Home> {
 //              'Allow access to the location services for this App using the device settings.');
         return Text("permision denied");
         }
-        return _displayLocationDetails();
+        return _displayMap();
       },
     );
   }
-  Widget _displayLocationDetails(){
+  Widget _displayMap(){
     if(_position.longitude != null){
       return Container(
         child: Column(
@@ -93,7 +93,18 @@ class _Home extends State<Home> {
         ),
       );
     }
-    return Center(child: CircularProgressIndicator());
+    return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Center(child: CircularProgressIndicator()),
+        Padding(
+          padding: const EdgeInsets.only(top:8.0),
+          child: Text("Loading..."),
+        )
+      ],
+    ));
 }
 
   void  _listening() {
