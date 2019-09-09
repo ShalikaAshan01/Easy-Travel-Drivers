@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:csse/views/map_sample.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class Home extends StatefulWidget {
 
@@ -19,17 +21,16 @@ class _Home extends State<Home> {
   Placemark _placemark;
   String _address = '';
 
+  GoogleMapController mapController;
+  Set<Marker> markers = Set();
+  LatLng _latLng =LatLng(7.8731,80.7718);
 
   @override
   void initState() {
     super.initState();
-    _toggleListening();
+    _listening();
   }
-  @override
-  void didUpdateWidget(Home oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _toggleListening();
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,15 +51,6 @@ class _Home extends State<Home> {
         (child: displayLocation()),
     );
   }
-  @override
-  void dispose() {
-    if (_positionStreamSubscription != null) {
-      _positionStreamSubscription.cancel();
-      _positionStreamSubscription = null;
-    }
-
-    super.dispose();
-  }
 
   Widget displayLocation(){
     return FutureBuilder<GeolocationStatus>(
@@ -72,7 +64,6 @@ class _Home extends State<Home> {
 //              'Allow access to the location services for this App using the device settings.');
         return Text("permision denied");
         }
-//        debugPrint(_positions.last.toString());
         return _displayLocationDetails();
       },
     );
@@ -84,7 +75,20 @@ class _Home extends State<Home> {
           children: <Widget>[
             Text(_position.toString()),
             Text(_position.timestamp.toIso8601String()),
-            Text(_address)
+            Text(_address),
+            Expanded(
+                child: GoogleMap(
+                  onMapCreated: (GoogleMapController controller){
+                    mapController = controller;
+                  },
+                  initialCameraPosition: CameraPosition(
+                    target: _latLng,
+                    zoom: 20.0
+                  ),
+
+                  myLocationEnabled: true,
+                )
+            )
           ],
         ),
       );
@@ -92,15 +96,26 @@ class _Home extends State<Home> {
     return Center(child: CircularProgressIndicator());
 }
 
-  void _toggleListening() {
+  void  _listening() {
     LocationOptions locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
     final Stream<Position> positionStream =
     Geolocator().getPositionStream(locationOptions);
-    _positionStreamSubscription = positionStream.listen((Position position) {
-      setState(() {
+    _positionStreamSubscription = positionStream.listen((Position position) async{
+        mapController?.moveCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(_position.latitude, _position.longitude),
+              zoom: 20.0
+            ),
+          )
+        );
+
+
+
+
         _position = position;
         getPlacemark();
-      });
+//      });
     });
   }
 
@@ -127,6 +142,8 @@ class _Home extends State<Home> {
   }
 
 
+
+
   Widget _permissionDenied(String title,String text){
     return Container(
       child: Card(
@@ -140,3 +157,11 @@ class _Home extends State<Home> {
     );
   }
 }
+
+//        _latLng = LatLng(_position.latitude, _position.longitude);
+//        markers.add(Marker(
+//          markerId: MarkerId("Location"),
+//          position: LatLng(_position.latitude, _position.longitude),
+//            infoWindow: InfoWindow(title: "Las"),
+//            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
+//        ));
