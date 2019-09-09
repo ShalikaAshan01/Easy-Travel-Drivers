@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:csse/views/map_sample.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -95,7 +94,6 @@ class _Home extends State<Home> {
                   )
                 ],
               ).show();
-//              PermissionHandler().openAppSettings();
             }
           });
 
@@ -189,25 +187,6 @@ class _Home extends State<Home> {
   }
 
   Widget _permissionDenied(String title,String text){
-    
-//    showDialog(
-//        context: context,
-//        builder: (BuildContext context){
-//          return AlertDialog(
-//            title: Text(title),
-//            content: Text(text),
-//            actions: <Widget>[
-//              FlatButton(
-//                child: Text("Ok"),
-//                onPressed: (){
-//
-//                },
-//              )
-//            ],
-//          );
-//        }
-//    );
-    
     return Container(
       child: Card(
         child: Column(
