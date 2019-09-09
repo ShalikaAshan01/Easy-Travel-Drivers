@@ -40,7 +40,7 @@ class _Home extends State<Home> {
   @override
   void dispose() {
     super.dispose();
-    _listening();
+    _positionStreamSubscription.cancel();
   }
 
 
