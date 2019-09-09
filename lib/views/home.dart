@@ -18,6 +18,9 @@ class Home extends StatefulWidget {
   State<StatefulWidget> createState() {
     return _Home();
   }
+  static _Home of(BuildContext context) {
+    return context.ancestorStateOfType(const TypeMatcher<_Home>());
+  }
 }
 
 class _Home extends State<Home> {
@@ -63,6 +66,8 @@ class _Home extends State<Home> {
               )
             ],
           ).show();
+        }else{
+          Home.of(context).rebuild();
         }
       }));
     });
@@ -77,6 +82,7 @@ class _Home extends State<Home> {
   void dispose() {
     super.dispose();
     _positionStreamSubscription.cancel();
+    _connectivitySubscription.cancel();
   }
 
 
@@ -272,6 +278,9 @@ class _Home extends State<Home> {
       return false;
     }
     return isConnected;
+  }
+  void rebuild() {
+    setState(() {});
   }
 }
 
