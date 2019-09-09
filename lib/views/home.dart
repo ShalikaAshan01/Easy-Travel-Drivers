@@ -6,6 +6,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class Home extends StatefulWidget {
 
@@ -31,6 +33,17 @@ class _Home extends State<Home> {
     _listening();
   }
 
+  @override
+  void didUpdateWidget(Home oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _listening();
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    _listening();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +65,8 @@ class _Home extends State<Home> {
     );
   }
 
+
+  ///check permission and display map
   Widget displayLocation(){
     return FutureBuilder<GeolocationStatus>(
       future: Geolocator().checkGeolocationPermissionStatus(),
@@ -59,15 +74,40 @@ class _Home extends State<Home> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
+
         if (snapshot.data == GeolocationStatus.denied) {
-//          return _permissionDenied('Access to location denied',
-//              'Allow access to the location services for this App using the device settings.');
-        return Text("permision denied");
+
+          PermissionHandler().shouldShowRequestPermissionRationale(PermissionGroup.location)
+          .then((bool val){
+            if(!val){
+              Alert(
+                  context: context,
+                  title: "Access to location denied",
+                  desc: "Allow access to the location services for this App using the device settings.After Enabling please restart the app",
+                buttons: [
+                  DialogButton(
+                    child: Text(
+                      "Ok",
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                    onPressed: () => PermissionHandler().openAppSettings(),
+                    width: 120,
+                  )
+                ],
+              ).show();
+//              PermissionHandler().openAppSettings();
+            }
+          });
+
+          return _permissionDenied('Access to location denied',
+              'Allow access to the location services for this App using the device settings.');
         }
         return _displayMap();
       },
     );
   }
+
+  ///show map
   Widget _displayMap(){
     if(_position.longitude != null){
       return Container(
@@ -101,12 +141,13 @@ class _Home extends State<Home> {
         Center(child: CircularProgressIndicator()),
         Padding(
           padding: const EdgeInsets.only(top:8.0),
-          child: Text("Loading..."),
+          child: Text("Loading...",style: TextStyle(fontWeight: FontWeight.bold),),
         )
       ],
     ));
 }
 
+  ///get current location
   void  _listening() {
     LocationOptions locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
     final Stream<Position> positionStream =
@@ -120,13 +161,8 @@ class _Home extends State<Home> {
             ),
           )
         );
-
-
-
-
         _position = position;
         getPlacemark();
-//      });
     });
   }
 
@@ -152,16 +188,34 @@ class _Home extends State<Home> {
     return '$name, $city, $state, $country';
   }
 
-
-
-
   Widget _permissionDenied(String title,String text){
+    
+//    showDialog(
+//        context: context,
+//        builder: (BuildContext context){
+//          return AlertDialog(
+//            title: Text(title),
+//            content: Text(text),
+//            actions: <Widget>[
+//              FlatButton(
+//                child: Text("Ok"),
+//                onPressed: (){
+//
+//                },
+//              )
+//            ],
+//          );
+//        }
+//    );
+    
     return Container(
       child: Card(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Container(child: Text(title),),
-            Container(child: Text(text),),
+            Container(child: Text(title,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20.0),),),
+            Container(child: Text(text,style: TextStyle(fontSize: 20.0,),),),
           ],
         ),
       ),
