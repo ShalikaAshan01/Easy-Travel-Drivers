@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
@@ -61,7 +62,10 @@ class _Home extends State<Home> {
                   "Ok",
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  AppSettings.openWIFISettings();
+                  Navigator.pop(context);
+                },
                 width: 120,
               )
             ],

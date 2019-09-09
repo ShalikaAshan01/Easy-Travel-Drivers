@@ -29,6 +29,7 @@ dependencies:
   permission_handler: ^3.2.2
   rflutter_alert: ^1.0.3
   connectivity: ^0.4.4
+  app_settings: ^1.0.6+2
 
 dev_dependencies:
   flutter_test:
