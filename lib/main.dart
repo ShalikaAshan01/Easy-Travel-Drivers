@@ -1,4 +1,4 @@
-import 'package:csse/views/home.dart';
+import 'package:csse/views/map.dart';
 import 'package:csse/views/map_sample.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';

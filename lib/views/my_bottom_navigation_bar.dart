@@ -1,5 +1,5 @@
-import 'package:csse/views/current_passengers.dart';
 import 'package:csse/views/home.dart';
+import 'package:csse/views/map.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +18,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   static  List<Widget> _widgetOptions = <Widget>[
     Home()
     ,
-    CurrentPassengers(),
+    MyMap(),
     Text(
       'Index 2: School',
       style: optionStyle,
