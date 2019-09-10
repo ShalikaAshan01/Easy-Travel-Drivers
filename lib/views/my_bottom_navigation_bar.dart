@@ -1,3 +1,4 @@
+import 'package:csse/views/current_passengers.dart';
 import 'package:csse/views/home.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,10 +18,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   static  List<Widget> _widgetOptions = <Widget>[
     Home()
     ,
-    Text(
-      'Index 1: Business',
-      style: optionStyle,
-    ),
+    CurrentPassengers(),
     Text(
       'Index 2: School',
       style: optionStyle,
