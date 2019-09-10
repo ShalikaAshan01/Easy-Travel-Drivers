@@ -145,6 +145,7 @@ class _QrScanner extends State<QrScanner>{
          .where('bus',isEqualTo: busRef)
 //         .where('bus',isEqualTo: '/bus/$busRef')
          .orderBy("start_time", descending: true)
+         .limit(1)
          .getDocuments();
      List<DocumentSnapshot> docs = snapshot.documents;
 
