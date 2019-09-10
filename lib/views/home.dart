@@ -46,7 +46,7 @@ class _HomeState extends State<Home> {
 
     return ListView.builder(
       itemCount: passengers.length,
-      itemExtent: 130.0,
+//      itemExtent: 130.0,
       itemBuilder: (BuildContext context, int position) {
         DocumentReference ref = passengers[position];
         return _buildListItem(ref);
@@ -58,14 +58,12 @@ class _HomeState extends State<Home> {
     return StreamBuilder(
         stream: documentReference.snapshots(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if(snapshot.hasData){
-            String name = snapshot.data['first_name'] + " " + snapshot.data['last_name'];
+          if (snapshot.hasData) {
+            String name =
+                snapshot.data['first_name'] + " " + snapshot.data['last_name'];
             return Text(
-                name,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20.0
-              ),
+              name,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
             );
           }
           return Text("");
@@ -78,59 +76,62 @@ class _HomeState extends State<Home> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             var data = snapshot.data;
+            if (data['status'] == "completed") {
+              return Container();
+            }
             String startPoint = data['start_point'];
             String endPoint = data['end_point'];
             String time = DateFormat.Hms().format(data['start_time'].toDate());
             String ticketAmount = data['ticket_amount'].toString();
 
-            return Padding(
+            return Container(
+              height: 130,
               padding: const EdgeInsets.all(5.0),
               child: Card(
-                  child: Container(
-                decoration: BoxDecoration(
-                    border: Border(
-                        left:
-                            BorderSide(color: Colors.blueAccent, width: 4.0))),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: <Widget>[
-                      Container(
-                        alignment: Alignment.topRight,
-                        padding: EdgeInsets.only(bottom: 5.0, right: 8.0),
-                        child: Text(
-                          "LKR $ticketAmount",
-                          style: TextStyle(color: Colors.lightBlue),
+                child: Container(
+                    decoration: BoxDecoration(
+                        border: Border(
+                            left: BorderSide(
+                                color: Colors.blueAccent, width: 4.0))),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: <Widget>[
+                        Container(
+                          alignment: Alignment.topRight,
+                          padding: EdgeInsets.only(bottom: 5.0, right: 8.0),
+                          child: Text(
+                            "LKR $ticketAmount",
+                            style: TextStyle(color: Colors.lightBlue),
+                          ),
                         ),
-                      ),
-                      Container(
-                        alignment: Alignment.topLeft,
-                        child: getPassengerName(data['passenger']),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text("$startPoint to $endPoint",
-                              style: TextStyle(
-                                  fontSize: 22.0,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.green)),
+                        Container(
+                          alignment: Alignment.topLeft,
+                          child: getPassengerName(data['passenger']),
                         ),
-                      ),
-                      Container(
-                        alignment: Alignment.bottomLeft,
-                        padding: EdgeInsets.only(bottom: 5.0, right: 8.0),
-                        child: Text(
-                          time,
-                          style: TextStyle(color: Colors.grey.shade500),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text("$startPoint to $endPoint",
+                                style: TextStyle(
+                                    fontSize: 22.0,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.green)),
+                          ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          alignment: Alignment.bottomLeft,
+                          padding: EdgeInsets.only(bottom: 5.0, right: 8.0),
+                          child: Text(
+                            time,
+                            style: TextStyle(color: Colors.grey.shade500),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              )
-//      ),
-                  ),
+              ),
             );
           }
           return Center(
