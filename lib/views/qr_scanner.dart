@@ -189,16 +189,18 @@ class _QrScanner extends State<QrScanner>{
 
     if(!isStarted){
       DocumentReference ref = Firestore.instance.collection('ride').document(code);
+      DocumentReference bRef = Firestore.instance.collection('bus').document(busRef);
 
       var list = List<DocumentReference>();
 
       list.add(ref);
       await Firestore.instance.collection('turn').document(turnId).updateData({
-        "passengers":FieldValue.arrayUnion(list)
+        "passengers":FieldValue.arrayUnion(list),
       });
       await Firestore.instance.collection('ride').document(code).updateData({
         "status":"started",
-        "start_time": DateTime.now()
+        "start_time": DateTime.now(),
+        "bus":bRef
       });
     }
     else{
