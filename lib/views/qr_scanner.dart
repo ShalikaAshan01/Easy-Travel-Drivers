@@ -17,6 +17,8 @@ class QrScanner extends StatefulWidget{
 }
 
 class _QrScanner extends State<QrScanner>{
+
+  //TODO:get bus id
   final String busRef = "ZLlJvSZM24uJqr2fXNn4";
   String turnId = "";
   bool isValid = false;
