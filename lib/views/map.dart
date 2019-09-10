@@ -19,9 +19,6 @@ class MyMap extends StatefulWidget {
   State<StatefulWidget> createState() {
     return _MyMapState();
   }
-  static _MyMapState of(BuildContext context) {
-    return context.ancestorStateOfType(const TypeMatcher<_MyMapState>());
-  }
 }
 
 class _MyMapState extends State<MyMap> {
@@ -70,8 +67,6 @@ class _MyMapState extends State<MyMap> {
               )
             ],
           ).show();
-        }else{
-          MyMap.of(context).rebuild();
         }
       }));
     });
@@ -268,9 +263,6 @@ class _MyMapState extends State<MyMap> {
       return false;
     }
     return isConnected;
-  }
-  void rebuild() {
-    setState(() {});
   }
 }
 
