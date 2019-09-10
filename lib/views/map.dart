@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,9 +13,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:flutter/services.dart';
 
-
 class MyMap extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() {
     return _MyMapState();
@@ -22,6 +21,9 @@ class MyMap extends StatefulWidget {
 }
 
 class _MyMapState extends State<MyMap> {
+
+  //TODO add bus id
+  final String busRef = "ZLlJvSZM24uJqr2fXNn4";
   StreamSubscription<Position> _positionStreamSubscription;
   Position _position = Position();
   Placemark _placemark;
@@ -35,8 +37,8 @@ class _MyMapState extends State<MyMap> {
   bool isOnline = true;
 
   GoogleMapController mapController;
-  Set<Marker> markers = Set();
-  LatLng _latLng =LatLng(7.8731,80.7718);
+  Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
+  LatLng _latLng = LatLng(7.8731, 80.7718);
 
   @override
   void initState() {
@@ -47,28 +49,29 @@ class _MyMapState extends State<MyMap> {
         .onConnectivityChanged
         .listen((ConnectivityResult result) async {
       await _updateConnectionStatus().then((bool isConnected) => setState(() {
-        isOnline = isConnected;
-        if(!isConnected){
-          Alert(
-            context: context,
-            title: "Whoops",
-            desc: "Slow or no internet connection. Please check internet connection",
-            buttons: [
-              DialogButton(
-                child: Text(
-                  "Ok",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-                onPressed: () {
-                  AppSettings.openWIFISettings();
-                  Navigator.pop(context);
-                },
-                width: 120,
-              )
-            ],
-          ).show();
-        }
-      }));
+            isOnline = isConnected;
+            if (!isConnected) {
+              Alert(
+                context: context,
+                title: "Whoops",
+                desc:
+                    "Slow or no internet connection. Please check internet connection",
+                buttons: [
+                  DialogButton(
+                    child: Text(
+                      "Ok",
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                    onPressed: () {
+                      AppSettings.openWIFISettings();
+                      Navigator.pop(context);
+                    },
+                    width: 120,
+                  )
+                ],
+              ).show();
+            }
+          }));
     });
   }
 
@@ -77,6 +80,7 @@ class _MyMapState extends State<MyMap> {
     super.didUpdateWidget(oldWidget);
     _listening();
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -84,32 +88,31 @@ class _MyMapState extends State<MyMap> {
     _connectivitySubscription.cancel();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Container
-      (child: displayLocation());
+    return Container(child: displayLocation());
   }
 
-
   ///check permission and display map
-  Widget displayLocation(){
+  Widget displayLocation() {
     return FutureBuilder<GeolocationStatus>(
       future: Geolocator().checkGeolocationPermissionStatus(),
-      builder: (BuildContext context, AsyncSnapshot<GeolocationStatus> snapshot) {
+      builder:
+          (BuildContext context, AsyncSnapshot<GeolocationStatus> snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.data == GeolocationStatus.denied) {
-
-          PermissionHandler().shouldShowRequestPermissionRationale(PermissionGroup.location)
-          .then((bool val){
-            if(!val){
+          PermissionHandler()
+              .shouldShowRequestPermissionRationale(PermissionGroup.location)
+              .then((bool val) {
+            if (!val) {
               Alert(
-                  context: context,
-                  title: "Access to location denied",
-                  desc: "Allow access to the location services for this App using the device settings.After Enabling please restart the app",
+                context: context,
+                title: "Access to location denied",
+                desc:
+                    "Allow access to the location services for this App using the device settings.After Enabling please restart the app",
                 buttons: [
                   DialogButton(
                     child: Text(
@@ -133,61 +136,67 @@ class _MyMapState extends State<MyMap> {
   }
 
   ///show map
-  Widget _displayMap(){
-    if(_position.longitude != null){
+  Widget _displayMap() {
+    if (_position.longitude != null) {
       return Container(
         child: Column(
           children: <Widget>[
-            Text(_position.toString()),
-            Text(_position.timestamp.toIso8601String()),
+            RaisedButton(
+              child: Text("Show Landmarks"),
+              color: Colors.green,
+              onPressed: (){
+                setState(() {
+                  addMarker();
+                });
+              },
+            ),
             Text(_address),
             Expanded(
                 child: GoogleMap(
-                  onMapCreated: (GoogleMapController controller){
-                    mapController = controller;
-                  },
-                  initialCameraPosition: CameraPosition(
-                    target: _latLng,
-                    zoom: 20.0
-                  ),
-
-                  myLocationEnabled: true,
-                )
-            )
+              onMapCreated: (GoogleMapController controller) {
+                mapController = controller;
+              },
+              initialCameraPosition:
+                  CameraPosition(target: _latLng, zoom: 20.0),
+              myLocationEnabled: true,
+                  markers: Set<Marker>.of(markers.values),
+            ))
           ],
         ),
       );
     }
     return Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Center(child: CircularProgressIndicator()),
         Padding(
-          padding: const EdgeInsets.only(top:8.0),
-          child: Text("Loading...",style: TextStyle(fontWeight: FontWeight.bold),),
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            "Loading...",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         )
       ],
     ));
-}
+  }
 
   ///get current location
-  void  _listening() {
-    LocationOptions locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
+  void _listening() {
+    LocationOptions locationOptions =
+        LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
     final Stream<Position> positionStream =
-    Geolocator().getPositionStream(locationOptions);
-    _positionStreamSubscription = positionStream.listen((Position position) async{
-        mapController?.moveCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(_position.latitude, _position.longitude),
-              zoom: 20.0
-            ),
-          )
-        );
-        _position = position;
-        getPlacemark();
+        Geolocator().getPositionStream(locationOptions);
+    _positionStreamSubscription =
+        positionStream.listen((Position position) async {
+      mapController?.moveCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(
+            target: LatLng(_position.latitude, _position.longitude),
+            zoom: 20.0),
+      ));
+      _position = position;
+      getPlacemark();
     });
   }
 
@@ -204,6 +213,7 @@ class _MyMapState extends State<MyMap> {
       _address = '$address';
     });
   }
+
   static String _buildAddressString(Placemark placemark) {
     final String name = placemark.name ?? '';
     final String city = placemark.locality ?? '';
@@ -213,15 +223,27 @@ class _MyMapState extends State<MyMap> {
     return '$name, $city, $state, $country';
   }
 
-  Widget _permissionDenied(String title,String text){
+  Widget _permissionDenied(String title, String text) {
     return Container(
       child: Card(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Container(child: Text(title,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20.0),),),
-            Container(child: Text(text,style: TextStyle(fontSize: 20.0,),),),
+            Container(
+              child: Text(
+                title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+              ),
+            ),
+            Container(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 20.0,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -246,15 +268,15 @@ class _MyMapState extends State<MyMap> {
     }
 
     await _updateConnectionStatus().then((bool isConnected) => setState(() {
-      isOnline = isConnected;
-    }));
+          isOnline = isConnected;
+        }));
   }
 
   Future<bool> _updateConnectionStatus() async {
     bool isConnected;
     try {
       final List<InternetAddress> result =
-      await InternetAddress.lookup('google.com');
+          await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
         isConnected = true;
       }
@@ -264,12 +286,45 @@ class _MyMapState extends State<MyMap> {
     }
     return isConnected;
   }
-}
 
-//        _latLng = LatLng(_position.latitude, _position.longitude);
-//        markers.add(Marker(
-//          markerId: MarkerId("Location"),
-//          position: LatLng(_position.latitude, _position.longitude),
-//            infoWindow: InfoWindow(title: "Las"),
-//            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
-//        ));
+  void addMarker(){
+//    MarkerId id = MarkerId("fsefse");
+//    final Marker marker = Marker(
+//        markerId: id,
+//        position: _latLng,
+//        infoWindow: InfoWindow(title: "Las"),
+//        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
+
+    Firestore.instance
+        .collection('turn')
+        .where('bus', isEqualTo: busRef)
+        .orderBy("start_time", descending: true)
+        .limit(1)
+        .snapshots().listen((QuerySnapshot snapshot) async {
+
+          DocumentSnapshot documentSnapshot = snapshot.documents.last;
+
+//          DocumentReference reference = documentSnapshot.data['passengers'];
+          List<dynamic> array = documentSnapshot.data['passengers'];
+
+          for(int i=0; i < array.length; i++){
+            DocumentReference dRef =  array.elementAt(i);
+            dRef.get().then((DocumentSnapshot dSnap){
+              GeoPoint geoPoint = dSnap['end_point_coordinate'];
+              MarkerId id = MarkerId(dSnap.documentID);
+              final Marker marker = Marker(
+                  markerId: id,
+                  position: LatLng(geoPoint.latitude,geoPoint.longitude),
+                  infoWindow: InfoWindow(title: dSnap['end_point']),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
+              markers[id] = marker;
+            });
+          }
+
+//          DocumentSnapshot data = await reference.get();
+//          debugPrint(reference.last.toString());
+
+    });
+
+  }
+}
