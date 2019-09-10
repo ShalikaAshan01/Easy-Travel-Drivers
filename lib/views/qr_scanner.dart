@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/views/home.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_mobile_vision/qr_camera.dart';
@@ -17,7 +18,9 @@ class QrScanner extends StatefulWidget{
 
 class _QrScanner extends State<QrScanner>{
   final String busRef = "ZLlJvSZM24uJqr2fXNn4";
+  String turnId = "";
   bool isValid = false;
+  bool isStarted = false;
   String text = "Scan Passengers QR Code";
 
   @override
@@ -65,7 +68,10 @@ class _QrScanner extends State<QrScanner>{
 //                Navigator.pushReplacement(context,
 //                    MaterialPageRoute(builder: (context)=>MyBottomNavigationBar()));
                   validateCode(code).then((bool val){
-//                    isValid = false;
+//                    isValid = false
+                  if(val){
+                    addNewPassenger(code);
+                  }
                     Navigator.pop(context);
                     _showAlert(val);
                   });
@@ -107,6 +113,7 @@ class _QrScanner extends State<QrScanner>{
     }else if(snapshot.data['status']=="completed"){
       return false;
     }
+    isStarted = snapshot.data['status'] == "started";
     return true;
   }
 
@@ -116,6 +123,9 @@ class _QrScanner extends State<QrScanner>{
     if(!res){
       title = "Whoops";
       content = "Invalid token.Please recheck and read";
+    }else if(isStarted){
+      title = "GoodBye";
+      content = "Thank you. Come Again";
     }
     showMyDialog(title, content);
   }
@@ -139,6 +149,9 @@ class _QrScanner extends State<QrScanner>{
      List<DocumentSnapshot> docs = snapshot.documents;
 
      DocumentSnapshot documentSnapshot = docs.first;
+
+     turnId = documentSnapshot.documentID;
+
      final now = DateTime.now();
      final date = documentSnapshot.data['start_time'].toDate();
      if(now.difference(date).inHours >24 || documentSnapshot.data["status"] == "completed"){
@@ -171,7 +184,28 @@ class _QrScanner extends State<QrScanner>{
      }
   }
 
-  void addNewPassenger(String code){
+  void addNewPassenger(String code)async{
+
+    if(!isStarted){
+      DocumentReference ref = Firestore.instance.collection('ride').document(code);
+
+      var list = List<DocumentReference>();
+
+      list.add(ref);
+      await Firestore.instance.collection('turn').document(turnId).updateData({
+        "passengers":FieldValue.arrayUnion(list)
+      });
+      await Firestore.instance.collection('ride').document(code).updateData({
+        "status":"started",
+        "start_time": DateTime.now()
+      });
+    }
+    else{
+      await Firestore.instance.collection('ride').document(code).updateData({
+        "status":"completed",
+        "end_time": DateTime.now()
+      });
+    }
 
   }
 }
