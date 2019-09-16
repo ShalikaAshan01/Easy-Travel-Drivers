@@ -19,7 +19,7 @@ class QrScanner extends StatefulWidget{
 class _QrScanner extends State<QrScanner>{
 
   //TODO:get bus id
-  final String busRef = "ZLlJvSZM24uJqr2fXNn4";
+  final String busRef = "r1zQyo9NkcKj7cqkv91X";
   String turnId = "";
   bool isValid = false;
   bool isStarted = false;
@@ -84,18 +84,20 @@ class _QrScanner extends State<QrScanner>{
             )
             ,
           ),
-          Center(
-            child: Padding(
-              padding: EdgeInsets.only(top: 20.0),
-              child: Card(
-                child: Padding(
-                  padding: EdgeInsets.all(15.0),
-                  child: Text(
-                      text,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.0,
-                      color: Colors.grey.shade500
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 20.0),
+                child: Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(15.0),
+                    child: Text(
+                        text,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.0,
+                        color: Colors.grey.shade500
+                      ),
                     ),
                   ),
                 ),
@@ -109,7 +111,7 @@ class _QrScanner extends State<QrScanner>{
 
   Future<bool> validateCode(String code) async{
     final DocumentSnapshot snapshot = await Firestore.instance
-        .collection("ride").document(code).get();
+        .collection("rides").document(code).get();
     if (snapshot == null || !snapshot.exists) {
       return false;
     }else if(snapshot.data['status']=="completed"){
@@ -122,12 +124,12 @@ class _QrScanner extends State<QrScanner>{
   void _showAlert(bool res){
     String title = "Great";
     String content = "New Passenger was added";
-    if(!res){
-      title = "Whoops";
-      content = "Invalid token.Please recheck and read";
-    }else if(isStarted){
+    if(isStarted){
       title = "GoodBye";
       content = "Thank you. Come Again";
+    }else if(!res){
+      title = "Whoops";
+      content = "Invalid token.Please recheck and read";
     }
     showMyDialog(title, content);
   }
@@ -143,44 +145,38 @@ class _QrScanner extends State<QrScanner>{
 
   void validateTurn()async{
 
-     var snapshot = await Firestore.instance.collection("turn")
+     var snapshot = await Firestore.instance.collection("turns")
          .where('bus',isEqualTo: busRef)
-//         .where('bus',isEqualTo: '/bus/$busRef')
-         .orderBy("start_time", descending: true)
+         .where('status',isEqualTo: 'started')
          .limit(1)
          .getDocuments();
      List<DocumentSnapshot> docs = snapshot.documents;
 
-     DocumentSnapshot documentSnapshot = docs.first;
-
-     turnId = documentSnapshot.documentID;
-
-     final now = DateTime.now();
-     final date = documentSnapshot.data['start_time'].toDate();
-     if(now.difference(date).inHours >24 || documentSnapshot.data["status"] == "completed"){
-//       Navigator.pop(context);
-     setState(() {
-       isValid = false;
-       text = "Please update turn information";
-     });
-//       showMyDialog("Invalid turn Information", "Please update your turn information");
-     Alert(
-       context: context,
-       type: AlertType.error,
-       title: "Invalid turn Information",
-       desc: "Please update your turn information.",
-       buttons: [
-         DialogButton(
-           child: Text(
-             "Ok",
-             style: TextStyle(color: Colors.white, fontSize: 20),
-           ),
-           onPressed: () => Navigator.pop(context),
-           width: 120,
-         )
-       ],
-     ).show();
-     }else{
+     if(snapshot.documents.length == 0){
+       setState(() {
+         isValid = false;
+         text = "Please update turn information";
+       });
+       Alert(
+         context: context,
+         type: AlertType.error,
+         title: "Invalid turn Information",
+         desc: "Please update your turn information.",
+         buttons: [
+           DialogButton(
+             child: Text(
+               "Ok",
+               style: TextStyle(color: Colors.white, fontSize: 20),
+             ),
+             onPressed: () => Navigator.pop(context),
+             width: 120,
+           )
+         ],
+       ).show();
+     }
+     else{
+       DocumentSnapshot documentSnapshot = docs.first;
+       turnId = documentSnapshot.documentID;
        setState(() {
          isValid = true;
        });
@@ -188,27 +184,27 @@ class _QrScanner extends State<QrScanner>{
   }
 
   void addNewPassenger(String code)async{
-
+    isValid = false;
     if(!isStarted){
-      DocumentReference ref = Firestore.instance.collection('ride').document(code);
-      DocumentReference bRef = Firestore.instance.collection('bus').document(busRef);
+      DocumentReference ref = Firestore.instance.collection('rides').document(code);
+      DocumentReference bRef = Firestore.instance.collection('buses').document(busRef);
 
       var list = List<DocumentReference>();
 
       list.add(ref);
-      await Firestore.instance.collection('turn').document(turnId).updateData({
+      await Firestore.instance.collection('turns').document(turnId).updateData({
         "passengers":FieldValue.arrayUnion(list),
       });
-      await Firestore.instance.collection('ride').document(code).updateData({
+      await Firestore.instance.collection('rides').document(code).updateData({
         "status":"started",
-        "start_time": DateTime.now(),
+        "startTime": DateTime.now(),
         "bus":bRef
       });
     }
     else{
-      await Firestore.instance.collection('ride').document(code).updateData({
+      await Firestore.instance.collection('rides').document(code).updateData({
         "status":"completed",
-        "end_time": DateTime.now()
+        "endTime": DateTime.now()
       });
     }
 

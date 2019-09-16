@@ -12,7 +12,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   //TODO:get bus id
-  final String busRef = "ZLlJvSZM24uJqr2fXNn4";
+  final String busRef = "r1zQyo9NkcKj7cqkv91X";
 
   @override
   Widget build(BuildContext context) {
@@ -24,18 +24,18 @@ class _HomeState extends State<Home> {
   Widget _buildView() {
     return StreamBuilder(
       stream: Firestore.instance
-          .collection('turn')
+          .collection('turns')
           .where('bus', isEqualTo: busRef)
-          .orderBy("start_time", descending: true)
+          .where("status",isEqualTo: "started")
           .limit(1)
           .snapshots(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
+        if (snapshot.hasData && snapshot.data.documents.length != 0) {
           DocumentSnapshot documentSnapshot = snapshot.data.documents[0];
           return _buildList(documentSnapshot);
         }
         return Center(
-          child: Text("Loading..."),
+          child: Text("No Data Found"),
         );
       },
     );
@@ -60,7 +60,7 @@ class _HomeState extends State<Home> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             String name =
-                snapshot.data['first_name'] + " " + snapshot.data['last_name'];
+                snapshot.data['firstName'] + " " + snapshot.data['lastName'];
             return Text(
               name,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
@@ -79,10 +79,10 @@ class _HomeState extends State<Home> {
             if (data['status'] == "completed") {
               return Container();
             }
-            String startPoint = data['start_point'];
-            String endPoint = data['end_point'];
-            String time = DateFormat.Hms().format(data['start_time'].toDate());
-            String ticketAmount = data['ticket_amount'].toString();
+            String startPoint = data['startPoint'];
+            String endPoint = data['endPoint'];
+            String time = DateFormat.Hms().format(data['startTime'].toDate());
+            String ticketAmount = data['ticketAmount'].toString();
 
             return Container(
               height: 130,

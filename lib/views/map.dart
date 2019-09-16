@@ -23,7 +23,7 @@ class MyMap extends StatefulWidget {
 class _MyMapState extends State<MyMap> {
 
   //TODO add bus id
-  final String busRef = "ZLlJvSZM24uJqr2fXNn4";
+  final String busRef = "r1zQyo9NkcKj7cqkv91X";
   StreamSubscription<Position> _positionStreamSubscription;
   Position _position = Position();
   Placemark _placemark;
@@ -296,9 +296,9 @@ class _MyMapState extends State<MyMap> {
 //        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
 
     Firestore.instance
-        .collection('turn')
+        .collection('turns')
         .where('bus', isEqualTo: busRef)
-        .orderBy("start_time", descending: true)
+        .orderBy("startTime", descending: true)
         .limit(1)
         .snapshots().listen((QuerySnapshot snapshot) async {
 
@@ -310,7 +310,7 @@ class _MyMapState extends State<MyMap> {
           for(int i=0; i < array.length; i++){
             DocumentReference dRef =  array.elementAt(i);
             dRef.get().then((DocumentSnapshot dSnap){
-              GeoPoint geoPoint = dSnap['end_point_coordinate'];
+              GeoPoint geoPoint = dSnap['endPointCoordinate'];
               MarkerId id = MarkerId(dSnap.documentID);
               final Marker marker = Marker(
                   markerId: id,
