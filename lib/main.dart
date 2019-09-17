@@ -1,15 +1,29 @@
+import 'package:csse/views/landing.dart';
+import 'package:csse/views/login.dart';
 import 'package:csse/views/map.dart';
 import 'package:csse/views/map_sample.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main(){
+bool isFirst= false;
+
+void main() async{
+  await checkVeryFirstRun();
   runApp(
     MaterialApp(
-//      home: Home()
     debugShowCheckedModeBanner: false,
-      home: MyBottomNavigationBar()
+//      home: MyBottomNavigationBar()
+    home: isFirst == null || isFirst == true ? Landing():
+        Login()
       ),
   );
+
+}
+
+checkVeryFirstRun()async{
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  isFirst = prefs.getBool('isFirst');
+  await prefs.setBool('isFirst', false);
 }
