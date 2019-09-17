@@ -22,6 +22,7 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildView() {
+    //TODO:update method
     return StreamBuilder(
       stream: Firestore.instance
           .collection('turns')
@@ -43,7 +44,9 @@ class _HomeState extends State<Home> {
 
   Widget _buildList(DocumentSnapshot document) {
     var passengers = document['passengers'];
-
+    if(passengers.length == 0){
+      return Text("No Passengers Found");
+    }
     return ListView.builder(
       itemCount: passengers.length,
 //      itemExtent: 130.0,
