@@ -19,20 +19,28 @@ class MyBottomNavigationBar extends StatefulWidget{
 class _NavigationBarState extends State<MyBottomNavigationBar>{
   //TODO add bus id
   final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  DocumentReference ref;
   int _selectedIndex = 0;
   bool validTurn = true;
   DocumentReference turnRef;
   static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static  List<Widget> _widgetOptions = <Widget>[
-    Profile(),
     Home(),
     MyMap(),
+    Profile(),
   ];
 
   @override
   void initState() {
     super.initState();
     checkTurn();
+    Firestore.instance
+        .collection('buses')
+        .document(busRef)
+        .get()
+        .then((DocumentSnapshot snapshot) {
+      ref = snapshot.reference;
+    });
   }
 
   void _onItemTapped(int index) {
@@ -140,8 +148,24 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
               "endTime":DateTime.now(),
               "status":"completed",
             }).then((_){
-              //TODO: update all rides
-              Navigator.pop(context);
+
+              Firestore.instance.collection('rides')
+              .where('bus',isEqualTo: ref)
+              .getDocuments()
+              .then((QuerySnapshot querySnapshot){
+                var batch = Firestore.instance.batch();
+                DocumentSnapshot doc;
+                for(int i=0;i<querySnapshot.documents.length;i++){
+                  doc = querySnapshot.documents[i];
+                  batch.updateData(doc.reference, {
+                    "status":"completed",
+                    "endTime":DateTime.now()
+                  });
+                }
+
+                batch.commit().then((_)=>Navigator.pop(context));
+
+              });
               validTurn = false;
             });
           }else{
