@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/views/view_all_turns.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
@@ -175,7 +176,12 @@ class ProfileState extends State<Profile> {
                     children: <Widget>[
                       Text("Turns", style: Theme.of(context).textTheme.title,),
                       FlatButton(
-                        onPressed: (){},
+                        onPressed: (){
+                          setState(() {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder:(context)=>ViewAllTurns()));
+                          });
+                        },
                         child: Text("View All", style: TextStyle(color: Colors.blue),),
                       )
                     ],
