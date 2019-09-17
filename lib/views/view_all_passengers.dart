@@ -14,18 +14,10 @@ class ViewAllPassengers extends StatefulWidget{
 class ViewAllPassengersState  extends State<ViewAllPassengers>{
   //TODO add bus id
   final String busRef = "r1zQyo9NkcKj7cqkv91X";
-  DocumentReference ref;
 
   @override
   void initState() {
     super.initState();
-    Firestore.instance
-        .collection('buses')
-        .document(busRef)
-        .get()
-        .then((DocumentSnapshot snapshot) {
-      ref = snapshot.reference;
-    });
   }
 
   @override
@@ -43,7 +35,7 @@ class ViewAllPassengersState  extends State<ViewAllPassengers>{
   Widget passengerCollection(){
     return Container(
       child: StreamBuilder(
-          stream: Firestore.instance.collection("rides").where("bus",isEqualTo: ref).orderBy('status',descending: true).snapshots(),
+          stream: Firestore.instance.collection("rides").where("bus",isEqualTo: busRef).orderBy('status',descending: true).snapshots(),
           builder: (context, snapshot){
             if(!snapshot.hasData)
               return Container(child: Text("Loading..."),);
@@ -60,7 +52,7 @@ class ViewAllPassengersState  extends State<ViewAllPassengers>{
     );
   }
   Widget passengerListItem(BuildContext context,DocumentSnapshot document){
-    DocumentReference documentReference = document.data['passenger'];
+    DocumentReference documentReference = Firestore.instance.collection('passengers').document(document.data['passenger']);
     var startTime = DateFormat.Hms().format(document['startTime'].toDate());
     var startDate = DateFormat.yMMMd().format(document['startTime'].toDate());
 
@@ -72,7 +64,9 @@ class ViewAllPassengersState  extends State<ViewAllPassengers>{
       endTime = "$endTime";
       endDate = "$endDate $endTime";
     }
-
+    var status = document.data['status'];
+    if(status == "previous")
+      status = "completed";
 
     return Container(
       child: Card(
@@ -95,7 +89,7 @@ class ViewAllPassengersState  extends State<ViewAllPassengers>{
               ),),
               SizedBox(height: 10,),
               Center(child: Container(padding: EdgeInsets.only(top: 7),child: Text("${document.data['startPoint']} to ${document.data['endPoint']} ",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18)),)),
-              Center(child: Container(padding: EdgeInsets.only(top: 7),child: Text("Status: ${document.data['status'][0].toUpperCase()}${document.data['status'].substring(1)}",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.grey.shade500)),)),
+              Center(child: Container(padding: EdgeInsets.only(top: 7),child: Text("Status: ${status[0].toUpperCase()}${status.substring(1)}",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.grey.shade500)),)),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

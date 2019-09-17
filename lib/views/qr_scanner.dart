@@ -114,10 +114,10 @@ class _QrScanner extends State<QrScanner>{
         .collection("rides").document(code).get();
     if (snapshot == null || !snapshot.exists) {
       return false;
-    }else if(snapshot.data['status']=="completed"){
+    }else if(snapshot.data['status']=="previous"|| snapshot.data['status']=="cancelled"){
       return false;
     }
-    isStarted = snapshot.data['status'] == "started";
+    isStarted = snapshot.data['status'] == "ongoing";
     return true;
   }
 
@@ -147,7 +147,7 @@ class _QrScanner extends State<QrScanner>{
 
      var snapshot = await Firestore.instance.collection("turns")
          .where('bus',isEqualTo: busRef)
-         .where('status',isEqualTo: 'started')
+         .where('status',isEqualTo: 'ongoing')
          .limit(1)
          .getDocuments();
      List<DocumentSnapshot> docs = snapshot.documents;
@@ -187,7 +187,6 @@ class _QrScanner extends State<QrScanner>{
     isValid = false;
     if(!isStarted){
       DocumentReference ref = Firestore.instance.collection('rides').document(code);
-      DocumentReference bRef = Firestore.instance.collection('buses').document(busRef);
 
       var list = List<DocumentReference>();
 
@@ -196,14 +195,14 @@ class _QrScanner extends State<QrScanner>{
         "passengers":FieldValue.arrayUnion(list),
       });
       await Firestore.instance.collection('rides').document(code).updateData({
-        "status":"started",
+        "status":"ongoing",
         "startTime": DateTime.now(),
-        "bus":bRef
+        "bus":busRef
       });
     }
     else{
       await Firestore.instance.collection('rides').document(code).updateData({
-        "status":"completed",
+        "status":"previous",
         "endTime": DateTime.now()
       });
     }

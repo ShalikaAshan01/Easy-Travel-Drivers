@@ -52,13 +52,14 @@ class ViewAllTurnsState extends State<ViewAllTurns>{
   }
 
   Widget turnListItem(BuildContext context,DocumentSnapshot document){
-    debugPrint("called");
     var startTime = DateFormat.Hms().format(document['startTime'].toDate());
     var startDate = DateFormat.yMMMd().format(document['startTime'].toDate());
     var endTime = "";
     var endDate = "";
     var passengers = document['passengers'].length;
     var status = document['status'];
+    if(status == "previous")
+      status = "completed";
     if(document['endTime']!= null) {
       endTime = DateFormat.Hms().format(document['endTime'].toDate());
       endDate = DateFormat.yMMMd().format(document['endTime'].toDate());

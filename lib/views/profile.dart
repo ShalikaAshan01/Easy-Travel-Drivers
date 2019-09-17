@@ -16,7 +16,6 @@ class Profile extends StatefulWidget {
 class ProfileState extends State<Profile> {
   //TODO add bus id
   final String busRef = "r1zQyo9NkcKj7cqkv91X";
-  DocumentReference ref;
   String driver = "";
   String regNo = "";
   int routeNo = 0;
@@ -26,13 +25,6 @@ class ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
-    Firestore.instance
-        .collection('buses')
-        .document(busRef)
-        .get()
-        .then((DocumentSnapshot snapshot) {
-      ref = snapshot.reference;
-    });
   }
   @override
   Widget build(BuildContext context) {
@@ -88,7 +80,7 @@ class ProfileState extends State<Profile> {
 
                       Firestore.instance
                           .collection("rides")
-                          .where('bus', isEqualTo: ref)
+                          .where('bus', isEqualTo: busRef)
                           .getDocuments()
                           .then((QuerySnapshot snapshot) {
                         setState(() {
@@ -248,6 +240,9 @@ class ProfileState extends State<Profile> {
     var endDate = "";
     var passengers = document['passengers'].length;
     var status = document['status'];
+    if(status == "previous"){
+      status = "completed";
+    }
     if(document['endTime']!= null) {
       endTime = DateFormat.Hms().format(document['endTime'].toDate());
       endDate = DateFormat.yMMMd().format(document['endTime'].toDate());
@@ -287,7 +282,7 @@ class ProfileState extends State<Profile> {
     return Container(
       height: 200,
       child: StreamBuilder(
-        stream: Firestore.instance.collection("rides").where("bus",isEqualTo: ref).orderBy('status',descending: true).snapshots(),
+        stream: Firestore.instance.collection("rides").where("bus",isEqualTo: busRef).orderBy('status',descending: true).snapshots(),
         builder: (context, snapshot){
           if(!snapshot.hasData)
             return Container(child: Text("Loading..."),);
@@ -306,7 +301,8 @@ class ProfileState extends State<Profile> {
     );
   }
   Widget passengerListItem(BuildContext context,DocumentSnapshot document){
-    DocumentReference documentReference = document.data['passenger'];
+    DocumentReference documentReference = Firestore.instance.collection('passengers').document(document.data['passenger']);
+
     var startTime = DateFormat.Hms().format(document['startTime'].toDate());
     var startDate = DateFormat.yMMMd().format(document['startTime'].toDate());
 
@@ -318,6 +314,10 @@ class ProfileState extends State<Profile> {
       endTime = "$endTime";
       endDate = "$endDate $endTime";
     }
+
+    var status = document.data['status'];
+    if(status == "previous")
+      status = "completed";
 
 
     return Container(
@@ -350,7 +350,7 @@ class ProfileState extends State<Profile> {
               endDate != "" ?
               Container(padding:EdgeInsets.fromLTRB(10, 7,0,7),child: Text(endDate,style: TextStyle(color: Colors.grey.shade500),),)
                   :Container(),
-              Container(padding: EdgeInsets.only(top: 7),child: Text("Status: ${document.data['status'][0].toUpperCase()}${document.data['status'].substring(1)}",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.grey.shade500)),),
+              Container(padding: EdgeInsets.only(top: 7),child: Text("Status: ${status[0].toUpperCase()}${status.substring(1)}",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.grey.shade500)),),
             ],
           ),
         ),

@@ -27,7 +27,7 @@ class _HomeState extends State<Home> {
       stream: Firestore.instance
           .collection('turns')
           .where('bus', isEqualTo: busRef)
-          .where("status",isEqualTo: "started")
+          .where("status",isEqualTo: "ongoing")
           .limit(1)
           .snapshots(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -57,9 +57,9 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget getPassengerName(DocumentReference documentReference) {
+  Widget getPassengerName(String documentReference) {
     return StreamBuilder(
-        stream: documentReference.snapshots(),
+        stream: Firestore.instance.collection('passengers').document(documentReference).snapshots(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             String name =
@@ -79,7 +79,7 @@ class _HomeState extends State<Home> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             var data = snapshot.data;
-            if (data['status'] == "completed") {
+            if (data['status'] == "previous") {
               return Container();
             }
             String startPoint = data['startPoint'];

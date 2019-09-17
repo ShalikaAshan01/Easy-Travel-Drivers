@@ -146,11 +146,12 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             Firestore.instance.collection('turns').document(turnRef.documentID)
                 .updateData({
               "endTime":DateTime.now(),
-              "status":"completed",
+              "status":"previous",
             }).then((_){
 
               Firestore.instance.collection('rides')
               .where('bus',isEqualTo: ref)
+              .where('status',isEqualTo: "ongoing")
               .getDocuments()
               .then((QuerySnapshot querySnapshot){
                 var batch = Firestore.instance.batch();
@@ -158,7 +159,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 for(int i=0;i<querySnapshot.documents.length;i++){
                   doc = querySnapshot.documents[i];
                   batch.updateData(doc.reference, {
-                    "status":"completed",
+                    "status":"previous",
                     "endTime":DateTime.now()
                   });
                 }
@@ -175,7 +176,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             Firestore.instance.collection('turns').add({
               "bus":busRef,
               "startTime":DateTime.now(),
-              "status":"started",
+              "status":"ongoing",
               "passengers": []
             }).then((DocumentReference docRef){
               Navigator.pop(context);
@@ -216,7 +217,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   void checkTurn(){
     Firestore.instance.collection("turns")
         .where('bus',isEqualTo: busRef)
-        .where('status',isEqualTo: 'started')
+        .where('status',isEqualTo: 'ongoing')
         .limit(1).getDocuments().then((QuerySnapshot snapshot){
           debugPrint(snapshot.documents.length.toString());
           if(snapshot.documents.length == 0){
