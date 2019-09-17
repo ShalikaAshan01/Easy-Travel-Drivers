@@ -9,11 +9,11 @@ import 'package:intl/intl.dart';
 class Profile extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
-    return ProfileState();
+    return _ProfileState();
   }
 }
 
-class ProfileState extends State<Profile> {
+class _ProfileState extends State<Profile> {
   //TODO add bus id
   final String busRef = "r1zQyo9NkcKj7cqkv91X";
   String driver = "";

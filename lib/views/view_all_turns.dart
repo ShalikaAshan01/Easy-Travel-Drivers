@@ -6,11 +6,11 @@ import 'package:intl/intl.dart';
 class ViewAllTurns extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-    return ViewAllTurnsState();
+    return _ViewAllTurnsState();
   }
 }
 
-class ViewAllTurnsState extends State<ViewAllTurns>{
+class _ViewAllTurnsState extends State<ViewAllTurns>{
   //TODO add bus id
   final String busRef = "r1zQyo9NkcKj7cqkv91X";
   @override

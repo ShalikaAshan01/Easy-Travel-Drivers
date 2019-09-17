@@ -6,12 +6,12 @@ import 'package:intl/intl.dart';
 class ViewAllPassengers extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-    return ViewAllPassengersState();
+    return _ViewAllPassengersState();
   }
 
 }
 
-class ViewAllPassengersState  extends State<ViewAllPassengers>{
+class _ViewAllPassengersState  extends State<ViewAllPassengers>{
   //TODO add bus id
   final String busRef = "r1zQyo9NkcKj7cqkv91X";
 
