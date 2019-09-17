@@ -298,7 +298,7 @@ class _MyMapState extends State<MyMap> {
     Firestore.instance
         .collection('turns')
         .where('bus', isEqualTo: busRef)
-        .orderBy("startTime", descending: true)
+        .where('status',isEqualTo: 'ongoing')
         .limit(1)
         .snapshots().listen((QuerySnapshot snapshot) async {
 
