@@ -17,7 +17,7 @@ class ViewAllTurnsState extends State<ViewAllTurns>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("All Turns"),
+        title: Text("Turn List"),
       ),
       body: Container(
         padding: EdgeInsets.all(8.0),
@@ -42,10 +42,7 @@ class ViewAllTurnsState extends State<ViewAllTurns>{
             }else{
               return ListView.builder(
                 itemCount: snapshot.data.documents.length,
-//                itemExtent: 200.0,
                 itemBuilder: (context,index){
-                  debugPrint("======================== $index");
-                  debugPrint(snapshot.data.documents.length.toString());
                   return turnListItem(context,snapshot.data.documents[index]);
                 },
               );
