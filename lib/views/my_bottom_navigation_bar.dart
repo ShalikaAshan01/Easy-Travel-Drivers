@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/views/home.dart';
 import 'package:csse/views/map.dart';
+import 'package:csse/views/profile.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/cupertino.dart' as prefix0;
@@ -23,13 +24,9 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   DocumentReference turnRef;
   static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static  List<Widget> _widgetOptions = <Widget>[
-    Home()
-    ,
+    Profile(),
+    Home(),
     MyMap(),
-    Text(
-      'Index 2: School',
-      style: optionStyle,
-    ),
   ];
 
   @override
@@ -143,6 +140,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
               "endTime":DateTime.now(),
               "status":"completed",
             }).then((_){
+              //TODO: update all rides
               Navigator.pop(context);
               validTurn = false;
             });
