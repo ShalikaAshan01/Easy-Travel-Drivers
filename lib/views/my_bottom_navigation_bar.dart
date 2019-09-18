@@ -100,12 +100,15 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                   ),
                 ),
                 PopupMenuItem(
-                  child: FlatButton(
-                    child: Text("Sign out"),
-                    onPressed: (){
+                  child: GestureDetector(
+                    onTap:(){
+                      Navigator.pop(context);
                       _signOut();
                     },
-                  ),
+                    child: Container(
+                      child: Text("Sign out"),
+                    ),
+                  )
                 )
               ];
             },
