@@ -1,19 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
 import 'package:csse/views/home.dart';
+import 'package:csse/views/login.dart';
 import 'package:csse/views/map.dart';
 import 'package:csse/views/profile.dart';
 import 'package:csse/views/qr_scanner.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as prefix1;
 
 class MyBottomNavigationBar extends StatefulWidget{
+  final BaseAuth auth;
+  MyBottomNavigationBar({this.auth});
   @override
   State<StatefulWidget> createState() {
     return _NavigationBarState();
   }
 
+}
+enum AuthStatus{
+  notSignedIn,
+  signedIn
 }
 
 class _NavigationBarState extends State<MyBottomNavigationBar>{
@@ -23,6 +32,8 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   int _selectedIndex = 0;
   bool validTurn = true;
   DocumentReference turnRef;
+  AuthStatus _authStatus = AuthStatus.notSignedIn;
+
   static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static  List<Widget> _widgetOptions = <Widget>[
     Home(),
@@ -33,6 +44,11 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   @override
   void initState() {
     super.initState();
+    widget.auth.currentUser().then((FirebaseUser user){
+      setState(() {
+        _authStatus = user == null ? AuthStatus.notSignedIn: AuthStatus.signedIn;
+      });
+    });
     checkTurn();
     Firestore.instance
         .collection('buses')
@@ -49,9 +65,17 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
+
+    if(_authStatus == AuthStatus.notSignedIn){
+      return Login(auth: widget.auth,onSignedIn: _signedIn ,);
+    }else{
+      return buildScaffold();
+    }
+  }
+
+  Widget buildScaffold(){
     return Scaffold(
       appBar: AppBar(
         title: Text("Easy Travel Drivers"),
@@ -73,6 +97,14 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                         ],
                       ),
                     ),
+                  ),
+                ),
+                PopupMenuItem(
+                  child: FlatButton(
+                    child: Text("Sign out"),
+                    onPressed: (){
+                      _signOut();
+                    },
                   ),
                 )
               ];
@@ -112,6 +144,12 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+  }
+
+  void _signedIn(){
+    setState(() {
+      _authStatus = AuthStatus.signedIn;
+    });
   }
 
   void showAlert(){
@@ -227,5 +265,15 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             turnRef = snapshot.documents.removeLast().reference;
           }
     });
+  }
+  void _signOut()async{
+    try {
+      await widget.auth.signOut();
+      setState(() {
+        _authStatus = AuthStatus.notSignedIn;
+      });
+    } on Exception catch (e) {
+      print(e);
+    }
   }
 }

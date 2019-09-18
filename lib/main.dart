@@ -1,3 +1,4 @@
+import 'package:csse/auth/auth.dart';
 import 'package:csse/views/landing.dart';
 import 'package:csse/views/login.dart';
 import 'package:csse/views/map.dart';
@@ -16,7 +17,7 @@ void main() async{
     debugShowCheckedModeBanner: false,
 //      home: MyBottomNavigationBar()
     home: isFirst == null || isFirst == true ? Landing():
-        Login()
+        MyBottomNavigationBar(auth: Auth(),)
       ),
   );
 

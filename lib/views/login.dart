@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
 class Login extends StatefulWidget {
+  final BaseAuth auth;
+  final VoidCallback onSignedIn;
+  Login({this.auth, this.onSignedIn});
   @override
   State<StatefulWidget> createState() {
     return _LoginState();
@@ -141,11 +145,12 @@ class _LoginState extends State<Login> {
     });
     final PhoneVerificationCompleted verificationCompleted =
         (AuthCredential phoneCredential) async {
-          AuthResult result = await _auth.signInWithCredential(phoneCredential);
-          createUserDocument(result.user);
+          FirebaseUser user = await widget.auth.signInWithPhoneNumber(phoneCredential);
+          createUserDocument(user);
           Navigator.pop(context);
-          Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => MyBottomNavigationBar()));
+          widget.onSignedIn();
+//          Navigator.pushReplacement(context,
+//          MaterialPageRoute(builder: (context) => MyBottomNavigationBar()));
     };
 
     final PhoneVerificationFailed phoneVerificationFailed =
@@ -200,24 +205,25 @@ class _LoginState extends State<Login> {
       smsCode: _controller.text,
     );
     try {
-      final FirebaseUser user =
-          (await _auth.signInWithCredential(credential)).user;
+      final FirebaseUser user = await widget.auth.signInWithPhoneNumber(credential);
       final FirebaseUser currentUser = await _auth.currentUser();
       assert(user.uid == currentUser.uid);
-      
-      setState(() async {
+
         if (user != null) {
 
           //check already have doc
           createUserDocument(currentUser);
-          Navigator.pop(context);
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => MyBottomNavigationBar()));
+          setState(() {
+            Navigator.pop(context);
+//            Navigator.pushReplacement(context,
+//                MaterialPageRoute(builder: (context) => MyBottomNavigationBar()));
+          });
+          widget.onSignedIn();
         } else {
           Navigator.pop(context);
           errorAlert("Sign in failed.Please Try Again");
         }
-      });
+
     } on Exception catch (e) {
       Navigator.pop(context);
       errorAlert("Invalid OTP");
