@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
 import 'package:csse/views/view_all_passengers.dart';
 import 'package:csse/views/view_all_turns.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class Profile extends StatefulWidget {
+  Profile();
   @override
   State<StatefulWidget> createState() {
     return _ProfileState();
@@ -14,20 +17,44 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  //TODO add bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  String _busRef = "";
   String driver = "";
   String regNo = "";
   int routeNo = 0;
   int totPassengers = 0;
   int turns = 0;
-
+  BaseAuth _auth = Auth();
   @override
   void initState() {
     super.initState();
+    _auth.currentUser().then((FirebaseUser user){
+      Firestore.instance.collection("inspectors").document(user.uid).get()
+          .then((DocumentSnapshot documentSnapshot){
+            setState(() {
+              _busRef = documentSnapshot.data['bus'];
+            });
+      });
+    });
   }
   @override
   Widget build(BuildContext context) {
+    if(_busRef== null || _busRef.isEmpty){
+      return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Center(child: CircularProgressIndicator()),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  "Loading...",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              )
+            ],
+          ));
+    }
     return ListView(
       children: <Widget>[
         Stack(
@@ -56,7 +83,7 @@ class _ProfileState extends State<Profile> {
                 child: StreamBuilder(
                     stream: Firestore.instance
                         .collection('buses')
-                        .document(busRef)
+                        .document(_busRef)
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
@@ -70,22 +97,22 @@ class _ProfileState extends State<Profile> {
 
                       Firestore.instance
                           .collection("turns")
-                          .where('bus', isEqualTo: busRef)
+                          .where('bus', isEqualTo: _busRef)
                           .getDocuments()
                           .then((QuerySnapshot snapshot) {
-                        setState(() {
-                          turns = snapshot.documents.length;
-                        });
+                            if(mounted) {
+                              setState(() {
+                                turns = snapshot.documents.length;
+                              });
+                            }
                       });
 
                       Firestore.instance
                           .collection("rides")
-                          .where('bus', isEqualTo: busRef)
+                          .where('bus', isEqualTo: _busRef)
                           .getDocuments()
                           .then((QuerySnapshot snapshot) {
-                        setState(() {
                           totPassengers = snapshot.documents.length;
-                        });
                       });
 
                       return Card(
@@ -211,7 +238,7 @@ class _ProfileState extends State<Profile> {
       child: StreamBuilder(
           stream: Firestore.instance
               .collection('turns')
-              .where('bus', isEqualTo: busRef)
+              .where('bus', isEqualTo: _busRef)
               .orderBy('startTime',descending: true)
               .snapshots(),
           builder: (context, snapshot) {
@@ -282,12 +309,11 @@ class _ProfileState extends State<Profile> {
     return Container(
       height: 200,
       child: StreamBuilder(
-        stream: Firestore.instance.collection("rides").where("bus",isEqualTo: busRef).orderBy('status',descending: true).snapshots(),
+        stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: true).snapshots(),
         builder: (context, snapshot){
           if(!snapshot.hasData)
             return Container(child: Text("Loading..."),);
           else{
-          totPassengers = snapshot.data.documents.length;
             return ListView.builder(
             scrollDirection: Axis.horizontal,
               itemCount: snapshot.data.documents.length,

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -12,12 +14,20 @@ class ViewAllPassengers extends StatefulWidget{
 }
 
 class _ViewAllPassengersState  extends State<ViewAllPassengers>{
-  //TODO add bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  String _busRef;
+  BaseAuth _auth = Auth();
 
   @override
   void initState() {
     super.initState();
+    _auth.currentUser().then((FirebaseUser user){
+      Firestore.instance.collection("inspectors").document(user.uid).get()
+          .then((DocumentSnapshot documentSnapshot){
+        setState(() {
+          _busRef = documentSnapshot.data['bus'];
+        });
+      });
+    });
   }
 
   @override
@@ -35,7 +45,7 @@ class _ViewAllPassengersState  extends State<ViewAllPassengers>{
   Widget passengerCollection(){
     return Container(
       child: StreamBuilder(
-          stream: Firestore.instance.collection("rides").where("bus",isEqualTo: busRef).orderBy('status',descending: true).snapshots(),
+          stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: true).snapshots(),
           builder: (context, snapshot){
             if(!snapshot.hasData)
               return Container(child: Text("Loading..."),);

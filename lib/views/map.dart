@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:csse/auth/auth.dart';
 import 'package:csse/views/qr_scanner.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -21,9 +23,7 @@ class MyMap extends StatefulWidget {
 }
 
 class _MyMapState extends State<MyMap> {
-
-  //TODO add bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  String _busRef;
   StreamSubscription<Position> _positionStreamSubscription;
   Position _position = Position();
   Placemark _placemark;
@@ -39,10 +39,19 @@ class _MyMapState extends State<MyMap> {
   GoogleMapController mapController;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   LatLng _latLng = LatLng(7.8731, 80.7718);
+  BaseAuth _auth = Auth();
 
   @override
   void initState() {
     super.initState();
+    _auth.currentUser().then((FirebaseUser user){
+      Firestore.instance.collection("inspectors").document(user.uid).get()
+          .then((DocumentSnapshot documentSnapshot){
+        setState(() {
+          _busRef = documentSnapshot.data['bus'];
+        });
+      });
+    });
     _listening();
     initConnectivity();
     _connectivitySubscription = Connectivity()
@@ -297,28 +306,30 @@ class _MyMapState extends State<MyMap> {
 
     Firestore.instance
         .collection('turns')
-        .where('bus', isEqualTo: busRef)
+        .where('bus', isEqualTo: _busRef)
         .where('status',isEqualTo: 'ongoing')
         .limit(1)
         .snapshots().listen((QuerySnapshot snapshot) async {
 
-          DocumentSnapshot documentSnapshot = snapshot.documents.last;
+          if(snapshot.documents.length != 0){
+            DocumentSnapshot documentSnapshot = snapshot.documents.last;
 
 //          DocumentReference reference = documentSnapshot.data['passengers'];
-          List<dynamic> array = documentSnapshot.data['passengers'];
+            List<dynamic> array = documentSnapshot.data['passengers'];
 
-          for(int i=0; i < array.length; i++){
-            DocumentReference dRef =  array.elementAt(i);
-            dRef.get().then((DocumentSnapshot dSnap){
-              GeoPoint geoPoint = dSnap['endPointCoordinate'];
-              MarkerId id = MarkerId(dSnap.documentID);
-              final Marker marker = Marker(
-                  markerId: id,
-                  position: LatLng(geoPoint.latitude,geoPoint.longitude),
-                  infoWindow: InfoWindow(title: dSnap['end_point']),
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
-              markers[id] = marker;
-            });
+            for(int i=0; i < array.length; i++){
+              DocumentReference dRef =  array.elementAt(i);
+              dRef.get().then((DocumentSnapshot dSnap){
+                GeoPoint geoPoint = dSnap['endPointCoordinate'];
+                MarkerId id = MarkerId(dSnap.documentID);
+                final Marker marker = Marker(
+                    markerId: id,
+                    position: LatLng(geoPoint.latitude,geoPoint.longitude),
+                    infoWindow: InfoWindow(title: dSnap['end_point']),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
+                markers[id] = marker;
+              });
+            }
           }
 
 //          DocumentSnapshot data = await reference.get();

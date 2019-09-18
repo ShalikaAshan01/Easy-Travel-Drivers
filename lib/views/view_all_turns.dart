@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,8 +13,20 @@ class ViewAllTurns extends StatefulWidget{
 }
 
 class _ViewAllTurnsState extends State<ViewAllTurns>{
-  //TODO add bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  String _busRef;
+  BaseAuth _auth = Auth();
+  @override
+  void initState() {
+    super.initState();
+    _auth.currentUser().then((FirebaseUser user){
+      Firestore.instance.collection("inspectors").document(user.uid).get()
+          .then((DocumentSnapshot documentSnapshot){
+        setState(() {
+          _busRef = documentSnapshot.data['bus'];
+        });
+      });
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,7 +45,7 @@ class _ViewAllTurnsState extends State<ViewAllTurns>{
       child: StreamBuilder(
           stream: Firestore.instance
               .collection('turns')
-              .where('bus', isEqualTo: busRef)
+              .where('bus', isEqualTo: _busRef)
               .orderBy('startTime',descending: true)
               .snapshots(),
           builder: (context, snapshot) {

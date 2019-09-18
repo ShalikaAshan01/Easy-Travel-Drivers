@@ -26,8 +26,8 @@ enum AuthStatus{
 }
 
 class _NavigationBarState extends State<MyBottomNavigationBar>{
-  //TODO add bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  static String busRef;
+  static String _user;
   DocumentReference ref;
   int _selectedIndex = 0;
   bool validTurn = true;
@@ -47,7 +47,39 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     widget.auth.currentUser().then((FirebaseUser user){
       setState(() {
         _authStatus = user == null ? AuthStatus.notSignedIn: AuthStatus.signedIn;
+        _user = user.uid;
       });
+
+      if(user != null){
+        Firestore.instance.collection('inspectors').document(user.uid).get()
+            .then((DocumentSnapshot  documentSnapshot){
+          if(documentSnapshot.data['status']=="inactive"){
+            showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context){
+                  return AlertDialog(
+                    title: Text("Unauthorized Account"),
+                    content: Text("Please activate your account"),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text("OK",style: TextStyle(color: Colors.redAccent,),),
+                        onPressed: (){
+                          _signOut();
+                          Navigator.pop(context);
+                        },
+                      )
+                    ],
+                  );
+                }
+            );
+          }else
+            setState(() {
+              busRef = documentSnapshot.data['bus'];
+            });
+        });
+      }
+
     });
     checkTurn();
     Firestore.instance

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,8 +13,20 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  //TODO:get bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  String _busRef;
+  BaseAuth _auth = Auth();
+  @override
+  void initState() {
+    super.initState();
+    _auth.currentUser().then((FirebaseUser user){
+      Firestore.instance.collection("inspectors").document(user.uid).get()
+          .then((DocumentSnapshot documentSnapshot){
+        setState(() {
+          _busRef = documentSnapshot.data['bus'];
+        });
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +36,10 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildView() {
-    //TODO:update method
     return StreamBuilder(
       stream: Firestore.instance
           .collection('turns')
-          .where('bus', isEqualTo: busRef)
+          .where('bus', isEqualTo: _busRef)
           .where("status",isEqualTo: "ongoing")
           .limit(1)
           .snapshots(),

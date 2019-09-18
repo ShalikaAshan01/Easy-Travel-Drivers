@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csse/auth/auth.dart';
 import 'package:csse/views/home.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
@@ -17,17 +19,24 @@ class QrScanner extends StatefulWidget{
 }
 
 class _QrScanner extends State<QrScanner>{
-
-  //TODO:get bus id
-  final String busRef = "r1zQyo9NkcKj7cqkv91X";
+  String _busRef;
   String turnId = "";
   bool isValid = false;
   bool isStarted = false;
   String text = "Scan Passengers QR Code";
+  BaseAuth _auth = Auth();
 
   @override
   void initState() {
     super.initState();
+    _auth.currentUser().then((FirebaseUser user){
+      Firestore.instance.collection("inspectors").document(user.uid).get()
+          .then((DocumentSnapshot documentSnapshot){
+        setState(() {
+          _busRef = documentSnapshot.data['bus'];
+        });
+      });
+    });
     PermissionHandler().checkPermissionStatus(PermissionGroup.camera)
     .then((PermissionStatus permission){
       if(permission != PermissionStatus.granted){
@@ -74,6 +83,7 @@ class _QrScanner extends State<QrScanner>{
                   if(val){
                     addNewPassenger(code);
                   }
+                  //TODO:check error
                     Navigator.pop(context);
                     _showAlert(val);
                   });
@@ -146,7 +156,7 @@ class _QrScanner extends State<QrScanner>{
   void validateTurn()async{
 
      var snapshot = await Firestore.instance.collection("turns")
-         .where('bus',isEqualTo: busRef)
+         .where('bus',isEqualTo: _busRef)
          .where('status',isEqualTo: 'ongoing')
          .limit(1)
          .getDocuments();
@@ -197,7 +207,7 @@ class _QrScanner extends State<QrScanner>{
       await Firestore.instance.collection('rides').document(code).updateData({
         "status":"ongoing",
         "startTime": DateTime.now(),
-        "bus":busRef
+        "bus":_busRef
       });
     }
     else{
