@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -13,8 +15,15 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   double imgSize = 150;
+  String _textFieldText = "Phone number";
+  String _labelText = "+94";
+  String _button = "login";
+  String _text = "Login with your phone number";
+  bool _isOTP = false;
   TextEditingController _controller = TextEditingController();
   var _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String _verificationId = "";
   String _phoneNumber;
@@ -22,6 +31,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       body: Center(
         child: Padding(
           padding: EdgeInsets.only(left: 10.0, right: 10.0),
@@ -42,7 +52,7 @@ class _LoginState extends State<Login> {
                       padding: const EdgeInsets.only(left: 12),
                       child: SizedBox(
                         child: Text(
-                          "+94",
+                          "$_labelText",
                           style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 18.0),
                         ),
@@ -60,12 +70,13 @@ class _LoginState extends State<Login> {
                             key: _formKey,
                             child: TextFormField(
                               validator: (String value) {
-                                return _phoneValidator(value);
+                                if (!_isOTP) return _phoneValidator(value);
+                                return null;
                               },
                               keyboardType: TextInputType.number,
                               controller: _controller,
                               decoration: InputDecoration(
-                                  labelText: "Phone Number".toUpperCase(),
+                                  labelText: "$_textFieldText".toUpperCase(),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(5.0),
                                   )),
@@ -84,20 +95,19 @@ class _LoginState extends State<Login> {
                   child: MaterialButton(
                     padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
                     child: Text(
-                      "Login".toUpperCase(),
+                      "$_button".toUpperCase(),
                       style: TextStyle(fontSize: 16.0),
                     ),
                     color: Colors.black,
                     textColor: Colors.white,
-                    onPressed: () async{
+                    onPressed: () async {
                       setState(() {
                         if (_formKey.currentState.validate()) {
-                          debugPrint("..............press..................");
-                          _verifyPhoneNumber();
-//                         Navigator
-//                          .pushReplacement(context, MaterialPageRoute(
-//                           builder: (context)=> MyBottomNavigationBar()
-//                         ));
+                          if (!_isOTP) {
+                            _verifyPhoneNumber();
+                          } else {
+                            signInWithPhoneNumber();
+                          }
                         }
                       });
                     },
@@ -105,7 +115,7 @@ class _LoginState extends State<Login> {
                 ),
               ),
               Container(
-                child: Text("Login with your phone number"),
+                child: Text("$_text"),
               )
             ],
           ),
@@ -125,65 +135,151 @@ class _LoginState extends State<Login> {
     return null;
   }
 
-  void _verifyPhoneNumber() async{
-
-    debugPrint("####################################################");
-    debugPrint("####################phone number $_phoneNumber################################");
-    debugPrint("####################################################");
+  void _verifyPhoneNumber() async {
+    showDialog(context: context, builder: (context) {
+      return simpleDialog;
+    });
     final PhoneVerificationCompleted verificationCompleted =
-        (AuthCredential phoneCredential) {
-      _auth.signInWithCredential(phoneCredential);
-      debugPrint("************************************");
-      debugPrint("**************credientials**********************");
-      prefix0.debugPrint("recived phone auth credentials $phoneCredential");
-      debugPrint("************************************");
-      debugPrint("************************************");
+        (AuthCredential phoneCredential) async {
+          AuthResult result = await _auth.signInWithCredential(phoneCredential);
+          createUserDocument(result.user);
+          Navigator.pop(context);
+          Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (context) => MyBottomNavigationBar()));
     };
 
     final PhoneVerificationFailed phoneVerificationFailed =
         (AuthException authException) {
-      debugPrint(
-          'Phone number verification failed. Code: ${authException.code}.'
-          ' Message: ${authException.message}');
+          Navigator.pop(context);
+          _scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text(authException.message),
+        duration: Duration(seconds: 3),
+      ));
     };
 
     final PhoneCodeSent codeSent =
         (String verificationId, [int forceResendingToken]) async {
-      debugPrint('Please check your phone for the verification code.$verificationId');
-            _verificationId = verificationId;
-        };
+          setState(() {
+            _isOTP = true;
+            _labelText = "e";
+            _textFieldText = "OTP";
+            _button = "Confirm";
+            _text =
+            "Please type the verification code sent to $_phoneNumber";
+            _controller.clear();
+            Navigator.pop(context);
+          });
+      _scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text("Please check your phone for the verification code"),
+        duration: Duration(seconds: 3),
+      ));
+      _verificationId = verificationId;
+    };
 
     final PhoneCodeAutoRetrievalTimeout codeAutoRetrievalTimeout =
         (String verificationId) {
-      _verificationId = verificationId;
+          Navigator.pop(context);
+          _verificationId = verificationId;
     };
 
     await _auth.verifyPhoneNumber(
         phoneNumber: _phoneNumber,
-        timeout: const Duration(seconds: 5),
+        timeout: const Duration(seconds: 59),
         verificationCompleted: verificationCompleted,
         verificationFailed: phoneVerificationFailed,
         codeSent: codeSent,
         codeAutoRetrievalTimeout: codeAutoRetrievalTimeout);
-
   }
 
-  void signInWithPhoneNumber()async{
+  void signInWithPhoneNumber() async {
+    showDialog(context: context, builder: (context) {
+      return simpleDialog;
+    });
     final AuthCredential credential = PhoneAuthProvider.getCredential(
       verificationId: _verificationId,
-//      smsCode: _smsController.text,
+      smsCode: _controller.text,
     );
-    final FirebaseUser user =
-    (await _auth.signInWithCredential(credential)).user;
-    final FirebaseUser currentUser = await _auth.currentUser();
-    assert(user.uid == currentUser.uid);
-    setState(() {
-    if (user != null) {
-//    _message = 'Successfully signed in, uid: ' + user.uid;
-    } else {
-//    _message = 'Sign in failed';
+    try {
+      final FirebaseUser user =
+          (await _auth.signInWithCredential(credential)).user;
+      final FirebaseUser currentUser = await _auth.currentUser();
+      assert(user.uid == currentUser.uid);
+      
+      setState(() async {
+        if (user != null) {
+
+          //check already have doc
+          createUserDocument(currentUser);
+          Navigator.pop(context);
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => MyBottomNavigationBar()));
+        } else {
+          Navigator.pop(context);
+          errorAlert("Sign in failed.Please Try Again");
+        }
+      });
+    } on Exception catch (e) {
+      Navigator.pop(context);
+      errorAlert("Invalid OTP");
     }
-    });
   }
 
+  void errorAlert(String message) {
+    Alert(
+      context: context,
+      type: AlertType.error,
+      title: "Oops..!",
+      desc: message,
+      buttons: [
+        DialogButton(
+          child: Text(
+            "OK",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () {
+            setState(() {
+              String _textFieldText = "Phone number";
+              String _labelText = "+94";
+              String _button = "login";
+              String _text = "Login with your phone number";
+              bool _isOTP = false;
+              _controller.clear();
+              Navigator.pop(context);
+            });
+            },
+          width: 120,
+        )
+      ],
+    ).show();
+  }
+
+  void createUserDocument(FirebaseUser currentUser)async{
+    DocumentSnapshot snapshot =await Firestore.instance.collection('inspectors').document(currentUser.uid).get();
+    if(!snapshot.exists){
+      await Firestore.instance.collection('inspectors').document(currentUser.uid)
+          .setData({
+        "bus":"",
+        "phoneNumber":currentUser.phoneNumber,
+        "status":"inactive"
+      });
+    }
+  }
+
+  Widget simpleDialog = SimpleDialog(
+      children: <Widget>[
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Center(child: CircularProgressIndicator()),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Please wait...",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            )
+          ],
+        )
+      ]);
 }
