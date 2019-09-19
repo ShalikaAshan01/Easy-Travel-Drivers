@@ -12,7 +12,6 @@ void main() async{
   runApp(
     MaterialApp(
     debugShowCheckedModeBanner: false,
-//      home: MyBottomNavigationBar()
     home: isFirst == null || isFirst == true ? Landing():
         MyBottomNavigationBar(auth: Auth(),)
       ),
