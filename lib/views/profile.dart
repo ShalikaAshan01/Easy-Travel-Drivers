@@ -309,7 +309,7 @@ class _ProfileState extends State<Profile> {
     return Container(
       height: 200,
       child: StreamBuilder(
-        stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: true).snapshots(),
+        stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: false).snapshots(),
         builder: (context, snapshot){
           if(!snapshot.hasData)
             return Container(child: Text("Loading..."),);
