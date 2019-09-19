@@ -7,9 +7,7 @@ import 'package:csse/views/profile.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart' as prefix1;
 
 class MyBottomNavigationBar extends StatefulWidget{
   final BaseAuth auth;
@@ -30,11 +28,10 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   static String _user;
   DocumentReference ref;
   int _selectedIndex = 0;
-  bool validTurn = true;
-  DocumentReference turnRef;
+  bool _validTurn = true;
+  DocumentReference _turnRef;
   AuthStatus _authStatus = AuthStatus.notSignedIn;
 
-  static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static  List<Widget> _widgetOptions = <Widget>[
     Home(),
     MyMap(),
@@ -126,7 +123,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                     child: Container(
                       child: Row(
                         children: <Widget>[
-                          Text(validTurn ? "Update Turn" : "Add New Turn")
+                          Text(_validTurn ? "Update Turn" : "Add New Turn")
                         ],
                       ),
                     ),
@@ -168,8 +165,6 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.redAccent,
-//        showSelectedLabels: true,
-//        showUnselectedLabels: false,
         iconSize: 25,
         selectedLabelStyle: TextStyle(fontWeight: FontWeight.w900),
         onTap: _onItemTapped,
@@ -217,11 +212,11 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             ]);
         setState(() {
           Navigator.pop(context);
-          if(validTurn){
+          if(_validTurn){
             showDialog(context: context, builder: (context) {
               return simpleDialog;
             });
-            Firestore.instance.collection('turns').document(turnRef.documentID)
+            Firestore.instance.collection('turns').document(_turnRef.documentID)
                 .updateData({
               "endTime":DateTime.now(),
               "status":"previous",
@@ -246,7 +241,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 batch.commit().then((_)=>Navigator.pop(context));
 
               });
-              validTurn = false;
+              _validTurn = false;
             });
           }else{
             showDialog(context: context, builder: (context) {
@@ -259,8 +254,8 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
               "passengers": []
             }).then((DocumentReference docRef){
               Navigator.pop(context);
-              turnRef = docRef;
-              validTurn = true;
+              _turnRef = docRef;
+              _validTurn = true;
             });
           }
         });
@@ -276,8 +271,8 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     );
 
     AlertDialog alert = AlertDialog(
-      title: Text(validTurn?"Finish Turn":"Add New Turn"),
-      content: Text(validTurn?"Are you sure you want to finish this turn?":"Are you sure you want to add new turn?"),
+      title: Text(_validTurn?"Finish Turn":"Add New Turn"),
+      content: Text(_validTurn?"Are you sure you want to finish this turn?":"Are you sure you want to add new turn?"),
       actions: [
         noButton,
         yesButton
@@ -300,10 +295,10 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
         .limit(1).getDocuments().then((QuerySnapshot snapshot){
           debugPrint(snapshot.documents.length.toString());
           if(snapshot.documents.length == 0){
-            validTurn = false;
+            _validTurn = false;
           }else{
-            validTurn = true;
-            turnRef = snapshot.documents.removeLast().reference;
+            _validTurn = true;
+            _turnRef = snapshot.documents.removeLast().reference;
           }
     });
   }

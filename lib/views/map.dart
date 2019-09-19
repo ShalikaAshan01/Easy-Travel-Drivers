@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:app_settings/app_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/auth/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,8 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
-import 'package:flutter/services.dart';
 
 class MyMap extends StatefulWidget {
   @override
@@ -25,10 +21,6 @@ class _MyMapState extends State<MyMap> {
   Position _position = Position();
   Placemark _placemark;
   String _address = '';
-
-  /// the internet connectivity status
-  bool isOnline = true;
-
   GoogleMapController mapController;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   LatLng _latLng = LatLng(7.8731, 80.7718);
@@ -203,12 +195,6 @@ class _MyMapState extends State<MyMap> {
   }
 
   void addMarker(){
-//    MarkerId id = MarkerId("fsefse");
-//    final Marker marker = Marker(
-//        markerId: id,
-//        position: _latLng,
-//        infoWindow: InfoWindow(title: "Las"),
-//        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
 
     Firestore.instance
         .collection('turns')
@@ -220,7 +206,6 @@ class _MyMapState extends State<MyMap> {
           if(snapshot.documents.length != 0){
             DocumentSnapshot documentSnapshot = snapshot.documents.last;
 
-//          DocumentReference reference = documentSnapshot.data['passengers'];
             List<dynamic> array = documentSnapshot.data['passengers'];
 
             for(int i=0; i < array.length; i++){
@@ -239,10 +224,6 @@ class _MyMapState extends State<MyMap> {
               });
             }
           }
-
-//          DocumentSnapshot data = await reference.get();
-//          debugPrint(reference.last.toString());
-
     });
 
   }

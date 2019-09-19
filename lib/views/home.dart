@@ -62,7 +62,6 @@ class _HomeState extends State<Home> {
     }
     return ListView.builder(
       itemCount: passengers.length,
-//      itemExtent: 130.0,
       itemBuilder: (BuildContext context, int position) {
         DocumentReference ref = passengers[position];
         return _buildListItem(ref);

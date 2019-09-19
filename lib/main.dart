@@ -1,8 +1,5 @@
 import 'package:csse/auth/auth.dart';
 import 'package:csse/views/landing.dart';
-import 'package:csse/views/login.dart';
-import 'package:csse/views/map.dart';
-import 'package:csse/views/map_sample.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
