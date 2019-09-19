@@ -43,7 +43,7 @@ class _QrScanner extends State<QrScanner>{
       body: Column(
         children: <Widget>[
           Container(
-            height: 600.0,
+            height: MediaQuery.of(context).size.height * 0.7,
             child: _isValid?Container(
               child: QrCamera(
                 qrCodeCallback: (code){
