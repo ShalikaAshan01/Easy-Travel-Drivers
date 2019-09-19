@@ -14,7 +14,7 @@ class ViewAllPassengers extends StatefulWidget{
 }
 
 class _ViewAllPassengersState  extends State<ViewAllPassengers>{
-  String _busRef;
+  String _busRef="";
   BaseAuth _auth = Auth();
 
   @override
@@ -48,7 +48,21 @@ class _ViewAllPassengersState  extends State<ViewAllPassengers>{
           stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: false).snapshots(),
           builder: (context, snapshot){
             if(!snapshot.hasData)
-              return Container(child: Text("Loading..."),);
+              return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Center(child: CircularProgressIndicator()),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Loading...",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ));
             else{
               return ListView.builder(
                 itemCount: snapshot.data.documents.length,

@@ -16,7 +16,7 @@ class MyMap extends StatefulWidget {
 }
 
 class _MyMapState extends State<MyMap> {
-  String _busRef;
+  String _busRef="";
   StreamSubscription<Position> _positionStreamSubscription;
   Position _position = Position();
   Placemark _placemark;

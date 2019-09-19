@@ -306,7 +306,7 @@ class _ProfileState extends State<Profile> {
   
   Widget passengerCollection(){
     return Container(
-      height: 200,
+      height: 210,
       child: StreamBuilder(
         stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: false).snapshots(),
         builder: (context, snapshot){

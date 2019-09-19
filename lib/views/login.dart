@@ -138,7 +138,7 @@ class _LoginState extends State<Login> {
   }
 
   void _verifyPhoneNumber() async {
-    showDialog(context: context, builder: (context) {
+    showDialog(barrierDismissible: false,context: context, builder: (context) {
       return simpleDialog;
     });
     final PhoneVerificationCompleted verificationCompleted =
@@ -195,7 +195,7 @@ class _LoginState extends State<Login> {
   }
 
   void signInWithPhoneNumber() async {
-    showDialog(context: context, builder: (context) {
+    showDialog(barrierDismissible: false,context: context, builder: (context) {
       return simpleDialog;
     });
     final AuthCredential credential = PhoneAuthProvider.getCredential(

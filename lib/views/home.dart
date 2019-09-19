@@ -13,7 +13,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  String _busRef;
+  String _busRef = "";
   BaseAuth _auth = Auth();
   @override
   void initState() {

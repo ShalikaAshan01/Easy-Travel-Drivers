@@ -29,11 +29,9 @@ enum AuthStatus{
 }
 
 class _NavigationBarState extends State<MyBottomNavigationBar>{
-  static String _busRef;
-  static String _user;
-  DocumentReference ref;
+  String _busRef="";
   int _selectedIndex = 0;
-  bool _validTurn = true;
+  bool _validTurn = false;
   DocumentReference _turnRef;
   AuthStatus _authStatus = AuthStatus.notSignedIn;
   Permissions _permissions = Permissions();
@@ -90,7 +88,6 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     widget.auth.currentUser().then((FirebaseUser user){
       setState(() {
         _authStatus = user == null ? AuthStatus.notSignedIn: AuthStatus.signedIn;
-        _user = user.uid;
       });
 
       if(user != null){
@@ -116,21 +113,15 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                   );
                 }
             );
-          }else
+          }else {
             setState(() {
               _busRef = documentSnapshot.data['bus'];
             });
+            checkTurn();
+          }
         });
       }
 
-    });
-    checkTurn();
-    Firestore.instance
-        .collection('buses')
-        .document(_busRef)
-        .get()
-        .then((DocumentSnapshot snapshot) {
-      ref = snapshot.reference;
     });
   }
 
@@ -161,10 +152,22 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 PopupMenuItem(
                   child:GestureDetector(
                     onTap: (){
-                      Navigator.pop(context);
-                      setState(() {
-                        showAlert();
-                      });
+                      if (_busRef!=null && _busRef.isNotEmpty) {
+                        Navigator.pop(context);
+                        setState(() {
+                          showAlert();
+                        });
+                      }else{
+                        showDialog(
+                          context: context,
+                          builder: (context){
+                            return AlertDialog(
+                              title: Text("Access Denied"),
+                              content: Text("You do not have permisson to do this action.Please contact agent"),
+                            );
+                          }
+                        );
+                      }
                     },
                     child: Container(
                       child: Row(
@@ -336,17 +339,20 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
 
   void checkTurn(){
     Firestore.instance.collection("turns")
-        .where('bus',isEqualTo: _busRef)
-        .where('status',isEqualTo: 'ongoing')
-        .limit(1).getDocuments().then((QuerySnapshot snapshot){
-          debugPrint(snapshot.documents.length.toString());
-          if(snapshot.documents.length == 0){
+          .where('bus',isEqualTo: _busRef)
+          .where('status',isEqualTo: 'ongoing')
+          .limit(1).getDocuments().then((QuerySnapshot snapshot){
+        if(snapshot.documents.length == 0){
+          setState(() {
             _validTurn = false;
-          }else{
+          });
+        }else{
+          setState(() {
             _validTurn = true;
             _turnRef = snapshot.documents.removeLast().reference;
-          }
-    });
+          });
+        }
+      });
   }
   void _signOut()async{
     try {
