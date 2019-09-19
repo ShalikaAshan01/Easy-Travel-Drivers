@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/auth/auth.dart';
+import 'package:csse/utils/permissions.dart';
 import 'package:csse/views/home.dart';
 import 'package:csse/views/login.dart';
 import 'package:csse/views/map.dart';
@@ -10,6 +11,8 @@ import 'package:csse/views/qr_scanner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class MyBottomNavigationBar extends StatefulWidget{
   final BaseAuth auth;
@@ -33,6 +36,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   bool _validTurn = true;
   DocumentReference _turnRef;
   AuthStatus _authStatus = AuthStatus.notSignedIn;
+  Permissions _permissions = Permissions();
 
   static  List<Widget> _widgetOptions = <Widget>[
     Home(),
@@ -43,6 +47,46 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   @override
   void initState() {
     super.initState();
+
+    ///Check permissions
+
+    _permissions.checkCameraPermission()
+    .then((PermissionStatus permissionStatus){
+      if(permissionStatus != PermissionStatus.granted){
+        if(_permissions.isAndroid()){
+          _permissions.checkRationaleCameraPermission()
+              .then((bool has) async {
+                if(!has){
+                  permissionAlert("camera");
+                }else{
+                  _permissions.requestCameraPermission();
+                }
+          });
+        }
+        else{
+          _permissions.requestCameraPermission();
+        }
+      }
+    });
+    _permissions.checkLocationPermission()
+    .then((PermissionStatus permissionStatus){
+      if(permissionStatus != PermissionStatus.granted){
+        if(_permissions.isAndroid()){
+          _permissions.checkRationaleLocationPermission()
+              .then((bool has) async {
+                if(!has){
+                  permissionAlert("location");
+                }else{
+                  _permissions.requestLocationPermission();
+                }
+          });
+        }
+        else{
+          _permissions.requestLocationPermission();
+        }
+      }
+    });
+
     widget.auth.currentUser().then((FirebaseUser user){
       setState(() {
         _authStatus = user == null ? AuthStatus.notSignedIn: AuthStatus.signedIn;
@@ -313,5 +357,32 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     } on Exception catch (e) {
       print(e);
     }
+  }
+
+  void permissionAlert(String permissionType){
+
+    String msg = "scan QR code";
+    if(permissionType == "location")
+      msg = "fetch current location";
+
+    Alert(
+      context: context,
+      type: AlertType.error,
+      title: "Permission Denied",
+      desc: "Without $permissionType permission the app is unable to $msg",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "OK",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () async {
+            Navigator.pop(context);
+            await PermissionHandler().openAppSettings();
+          },
+          width: 120,
+        )
+      ],
+    ).show();
   }
 }
