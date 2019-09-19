@@ -118,6 +118,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 PopupMenuItem(
                   child:GestureDetector(
                     onTap: (){
+                      Navigator.pop(context);
                       setState(() {
                         showAlert();
                       });

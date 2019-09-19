@@ -83,7 +83,6 @@ class _QrScanner extends State<QrScanner>{
                   if(val){
                     addNewPassenger(code);
                   }
-                  //TODO:check error
                     Navigator.pop(context);
                     _showAlert(val);
                   });
