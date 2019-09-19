@@ -26,7 +26,7 @@ enum AuthStatus{
 }
 
 class _NavigationBarState extends State<MyBottomNavigationBar>{
-  static String busRef;
+  static String _busRef;
   static String _user;
   DocumentReference ref;
   int _selectedIndex = 0;
@@ -75,7 +75,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             );
           }else
             setState(() {
-              busRef = documentSnapshot.data['bus'];
+              _busRef = documentSnapshot.data['bus'];
             });
         });
       }
@@ -84,7 +84,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     checkTurn();
     Firestore.instance
         .collection('buses')
-        .document(busRef)
+        .document(_busRef)
         .get()
         .then((DocumentSnapshot snapshot) {
       ref = snapshot.reference;
@@ -223,7 +223,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             }).then((_){
 
               Firestore.instance.collection('rides')
-              .where('bus',isEqualTo: ref)
+              .where('bus',isEqualTo: _busRef)
               .where('status',isEqualTo: "ongoing")
               .getDocuments()
               .then((QuerySnapshot querySnapshot){
@@ -231,6 +231,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 DocumentSnapshot doc;
                 for(int i=0;i<querySnapshot.documents.length;i++){
                   doc = querySnapshot.documents[i];
+
                   batch.updateData(doc.reference, {
                     "status":"previous",
                     "endTime":DateTime.now()
@@ -247,7 +248,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
               return simpleDialog;
             });
             Firestore.instance.collection('turns').add({
-              "bus":busRef,
+              "bus":_busRef,
               "startTime":DateTime.now(),
               "status":"ongoing",
               "passengers": []
@@ -289,7 +290,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
 
   void checkTurn(){
     Firestore.instance.collection("turns")
-        .where('bus',isEqualTo: busRef)
+        .where('bus',isEqualTo: _busRef)
         .where('status',isEqualTo: 'ongoing')
         .limit(1).getDocuments().then((QuerySnapshot snapshot){
           debugPrint(snapshot.documents.length.toString());
