@@ -3,15 +3,12 @@ import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity/connectivity.dart';
 import 'package:csse/auth/auth.dart';
-import 'package:csse/views/qr_scanner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:flutter/services.dart';
 
@@ -29,10 +26,6 @@ class _MyMapState extends State<MyMap> {
   Placemark _placemark;
   String _address = '';
 
-  final Connectivity _connectivity = Connectivity();
-
-  StreamSubscription<ConnectivityResult> _connectivitySubscription;
-
   /// the internet connectivity status
   bool isOnline = true;
 
@@ -47,41 +40,13 @@ class _MyMapState extends State<MyMap> {
     _auth.currentUser().then((FirebaseUser user){
       Firestore.instance.collection("inspectors").document(user.uid).get()
           .then((DocumentSnapshot documentSnapshot){
-        setState(() {
-          _busRef = documentSnapshot.data['bus'];
-        });
+            if(mounted)
+              setState(() {
+                _busRef = documentSnapshot.data['bus'];
+              });
       });
     });
     _listening();
-    initConnectivity();
-    _connectivitySubscription = Connectivity()
-        .onConnectivityChanged
-        .listen((ConnectivityResult result) async {
-      await _updateConnectionStatus().then((bool isConnected) => setState(() {
-            isOnline = isConnected;
-            if (!isConnected) {
-              Alert(
-                context: context,
-                title: "Whoops",
-                desc:
-                    "Slow or no internet connection. Please check internet connection",
-                buttons: [
-                  DialogButton(
-                    child: Text(
-                      "Ok",
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    onPressed: () {
-                      AppSettings.openWIFISettings();
-                      Navigator.pop(context);
-                    },
-                    width: 120,
-                  )
-                ],
-              ).show();
-            }
-          }));
-    });
   }
 
   @override
@@ -94,7 +59,6 @@ class _MyMapState extends State<MyMap> {
   void dispose() {
     super.dispose();
     _positionStreamSubscription.cancel();
-    _connectivitySubscription.cancel();
   }
 
   @override
@@ -113,29 +77,6 @@ class _MyMapState extends State<MyMap> {
         }
 
         if (snapshot.data == GeolocationStatus.denied) {
-          PermissionHandler()
-              .shouldShowRequestPermissionRationale(PermissionGroup.location)
-              .then((bool val) {
-            if (!val) {
-              Alert(
-                context: context,
-                title: "Access to location denied",
-                desc:
-                    "Allow access to the location services for this App using the device settings.After Enabling please restart the app",
-                buttons: [
-                  DialogButton(
-                    child: Text(
-                      "Ok",
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    onPressed: () => PermissionHandler().openAppSettings(),
-                    width: 120,
-                  )
-                ],
-              ).show();
-            }
-          });
-
           return _permissionDenied('Access to location denied',
               'Allow access to the location services for this App using the device settings.');
         }
@@ -205,7 +146,8 @@ class _MyMapState extends State<MyMap> {
             zoom: 20.0),
       ));
       _position = position;
-      getPlacemark();
+      if(mounted)
+        getPlacemark();
     });
   }
 
@@ -248,6 +190,7 @@ class _MyMapState extends State<MyMap> {
             Container(
               child: Text(
                 text,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20.0,
                 ),
@@ -257,43 +200,6 @@ class _MyMapState extends State<MyMap> {
         ),
       ),
     );
-  }
-
-  /// initialize connectivity checking
-  /// Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initConnectivity() async {
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      await _connectivity.checkConnectivity();
-    } on PlatformException catch (e) {
-      print(e.toString());
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) {
-      return;
-    }
-
-    await _updateConnectionStatus().then((bool isConnected) => setState(() {
-          isOnline = isConnected;
-        }));
-  }
-
-  Future<bool> _updateConnectionStatus() async {
-    bool isConnected;
-    try {
-      final List<InternetAddress> result =
-          await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        isConnected = true;
-      }
-    } on SocketException catch (_) {
-      isConnected = false;
-      return false;
-    }
-    return isConnected;
   }
 
   void addMarker(){
