@@ -30,9 +30,10 @@ class _ProfileState extends State<Profile> {
     _auth.currentUser().then((FirebaseUser user){
       Firestore.instance.collection("inspectors").document(user.uid).get()
           .then((DocumentSnapshot documentSnapshot){
-            setState(() {
-              _busRef = documentSnapshot.data['bus'];
-            });
+            if(mounted)
+              setState(() {
+                _busRef = documentSnapshot.data['bus'];
+              });
       });
     });
   }
