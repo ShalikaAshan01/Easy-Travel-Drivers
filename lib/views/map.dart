@@ -226,14 +226,16 @@ class _MyMapState extends State<MyMap> {
             for(int i=0; i < array.length; i++){
               DocumentReference dRef =  array.elementAt(i);
               dRef.get().then((DocumentSnapshot dSnap){
-                GeoPoint geoPoint = dSnap['endPointCoordinate'];
-                MarkerId id = MarkerId(dSnap.documentID);
-                final Marker marker = Marker(
-                    markerId: id,
-                    position: LatLng(geoPoint.latitude,geoPoint.longitude),
-                    infoWindow: InfoWindow(title: dSnap['end_point']),
-                    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
-                markers[id] = marker;
+                if(dSnap.data['status']=="ongoing" && dSnap.data['endPointCoordinate'] != null){
+                  GeoPoint geoPoint = dSnap.data['endPointCoordinate'];
+                  MarkerId id = MarkerId(dSnap.documentID);
+                  final Marker marker = Marker(
+                      markerId: id,
+                      position: LatLng(geoPoint.latitude,geoPoint.longitude),
+                      infoWindow: InfoWindow(title: dSnap['end_point']),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
+                  markers[id] = marker;
+                }
               });
             }
           }
