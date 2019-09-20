@@ -1,5 +1,11 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:app_settings/app_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:csse/auth/auth.dart';
+import 'package:csse/utils/permissions.dart';
 import 'package:csse/views/home.dart';
 import 'package:csse/views/login.dart';
 import 'package:csse/views/map.dart';
@@ -7,9 +13,10 @@ import 'package:csse/views/profile.dart';
 import 'package:csse/views/qr_scanner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart' as prefix1;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:flutter/services.dart';
 
 class MyBottomNavigationBar extends StatefulWidget{
   final BaseAuth auth;
@@ -26,15 +33,16 @@ enum AuthStatus{
 }
 
 class _NavigationBarState extends State<MyBottomNavigationBar>{
-  static String _busRef;
-  static String _user;
-  DocumentReference ref;
+  String _busRef="";
   int _selectedIndex = 0;
-  bool validTurn = true;
-  DocumentReference turnRef;
+  bool _validTurn = false;
+  DocumentReference _turnRef;
   AuthStatus _authStatus = AuthStatus.notSignedIn;
+  Permissions _permissions = Permissions();
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  bool isOnline = true;
 
-  static const TextStyle optionStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static  List<Widget> _widgetOptions = <Widget>[
     Home(),
     MyMap(),
@@ -44,10 +52,80 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   @override
   void initState() {
     super.initState();
+
+    ///check connection
+    initConnectivity();
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) async {
+      await _updateConnectionStatus().then((bool isConnected) => setState(() {
+        isOnline = isConnected;
+        if (!isConnected) {
+          Alert(
+            context: context,
+            title: "Whoops",
+            desc:
+            "Slow or no internet connection. Please check internet connection",
+            buttons: [
+              DialogButton(
+                child: Text(
+                  "Ok",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  AppSettings.openWIFISettings();
+                },
+                width: 120,
+              )
+            ],
+          ).show();
+        }
+      }));
+    });
+
+    ///Check permissions
+
+    _permissions.checkCameraPermission()
+    .then((PermissionStatus permissionStatus){
+      if(permissionStatus != PermissionStatus.granted){
+        if(_permissions.isAndroid()){
+          _permissions.checkRationaleCameraPermission()
+              .then((bool has) async {
+                if(!has){
+                  permissionAlert("camera");
+                }else{
+                  _permissions.requestCameraPermission();
+                }
+          });
+        }
+        else{
+          _permissions.requestCameraPermission();
+        }
+      }
+    });
+    _permissions.checkLocationPermission()
+    .then((PermissionStatus permissionStatus){
+      if(permissionStatus != PermissionStatus.granted){
+        if(_permissions.isAndroid()){
+          _permissions.checkRationaleLocationPermission()
+              .then((bool has) async {
+                if(!has){
+                  permissionAlert("location");
+                }else{
+                  _permissions.requestLocationPermission();
+                }
+          });
+        }
+        else{
+          _permissions.requestLocationPermission();
+        }
+      }
+    });
+
     widget.auth.currentUser().then((FirebaseUser user){
       setState(() {
         _authStatus = user == null ? AuthStatus.notSignedIn: AuthStatus.signedIn;
-        _user = user.uid;
       });
 
       if(user != null){
@@ -73,21 +151,15 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                   );
                 }
             );
-          }else
+          }else {
             setState(() {
               _busRef = documentSnapshot.data['bus'];
             });
+            checkTurn();
+          }
         });
       }
 
-    });
-    checkTurn();
-    Firestore.instance
-        .collection('buses')
-        .document(_busRef)
-        .get()
-        .then((DocumentSnapshot snapshot) {
-      ref = snapshot.reference;
     });
   }
 
@@ -118,15 +190,27 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 PopupMenuItem(
                   child:GestureDetector(
                     onTap: (){
-                      Navigator.pop(context);
-                      setState(() {
-                        showAlert();
-                      });
+                      if (_busRef!=null && _busRef.isNotEmpty) {
+                        Navigator.pop(context);
+                        setState(() {
+                          showAlert();
+                        });
+                      }else{
+                        showDialog(
+                          context: context,
+                          builder: (context){
+                            return AlertDialog(
+                              title: Text("Access Denied"),
+                              content: Text("You do not have permisson to do this action.Please contact agent"),
+                            );
+                          }
+                        );
+                      }
                     },
                     child: Container(
                       child: Row(
                         children: <Widget>[
-                          Text(validTurn ? "Update Turn" : "Add New Turn")
+                          Text(_validTurn ? "Update Turn" : "Add New Turn")
                         ],
                       ),
                     ),
@@ -158,16 +242,18 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             title: Text('Home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.business),
-            title: Text('Business'),
+            icon: Icon(Icons.map),
+            title: Text('Map'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            title: Text('School'),
+            icon: Icon(Icons.account_circle),
+            title: Text('Profile'),
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Colors.redAccent,
+        iconSize: 25,
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w900),
         onTap: _onItemTapped,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -213,11 +299,11 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             ]);
         setState(() {
           Navigator.pop(context);
-          if(validTurn){
+          if(_validTurn){
             showDialog(context: context, builder: (context) {
               return simpleDialog;
             });
-            Firestore.instance.collection('turns').document(turnRef.documentID)
+            Firestore.instance.collection('turns').document(_turnRef.documentID)
                 .updateData({
               "endTime":DateTime.now(),
               "status":"previous",
@@ -242,7 +328,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
                 batch.commit().then((_)=>Navigator.pop(context));
 
               });
-              validTurn = false;
+              _validTurn = false;
             });
           }else{
             showDialog(context: context, builder: (context) {
@@ -255,8 +341,8 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
               "passengers": []
             }).then((DocumentReference docRef){
               Navigator.pop(context);
-              turnRef = docRef;
-              validTurn = true;
+              _turnRef = docRef;
+              _validTurn = true;
             });
           }
         });
@@ -272,8 +358,8 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     );
 
     AlertDialog alert = AlertDialog(
-      title: Text(validTurn?"Finish Turn":"Add New Turn"),
-      content: Text(validTurn?"Are you sure you want to finish this turn?":"Are you sure you want to add new turn?"),
+      title: Text(_validTurn?"Finish Turn":"Add New Turn"),
+      content: Text(_validTurn?"Are you sure you want to finish this turn?":"Are you sure you want to add new turn?"),
       actions: [
         noButton,
         yesButton
@@ -291,17 +377,20 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
 
   void checkTurn(){
     Firestore.instance.collection("turns")
-        .where('bus',isEqualTo: _busRef)
-        .where('status',isEqualTo: 'ongoing')
-        .limit(1).getDocuments().then((QuerySnapshot snapshot){
-          debugPrint(snapshot.documents.length.toString());
-          if(snapshot.documents.length == 0){
-            validTurn = false;
-          }else{
-            validTurn = true;
-            turnRef = snapshot.documents.removeLast().reference;
-          }
-    });
+          .where('bus',isEqualTo: _busRef)
+          .where('status',isEqualTo: 'ongoing')
+          .limit(1).getDocuments().then((QuerySnapshot snapshot){
+        if(snapshot.documents.length == 0){
+          setState(() {
+            _validTurn = false;
+          });
+        }else{
+          setState(() {
+            _validTurn = true;
+            _turnRef = snapshot.documents.removeLast().reference;
+          });
+        }
+      });
   }
   void _signOut()async{
     try {
@@ -313,4 +402,69 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
       print(e);
     }
   }
+
+  void permissionAlert(String permissionType){
+
+    String msg = "scan QR code";
+    if(permissionType == "location")
+      msg = "fetch current location";
+
+    Alert(
+      context: context,
+      type: AlertType.error,
+      title: "Permission Denied",
+      desc: "Without $permissionType permission the app is unable to $msg",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "OK",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () async {
+            Navigator.pop(context);
+            await PermissionHandler().openAppSettings();
+          },
+          width: 120,
+        )
+      ],
+    ).show();
+  }
+
+  /// initialize connectivity checking
+  /// Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initConnectivity() async {
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      await _connectivity.checkConnectivity();
+    } on PlatformException catch (e) {
+      print(e.toString());
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) {
+      return;
+    }
+
+    await _updateConnectionStatus().then((bool isConnected) => setState(() {
+      isOnline = isConnected;
+    }));
+  }
+
+  Future<bool> _updateConnectionStatus() async {
+    bool isConnected;
+    try {
+      final List<InternetAddress> result =
+      await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        isConnected = true;
+      }
+    } on SocketException catch (_) {
+      isConnected = false;
+      return false;
+    }
+    return isConnected;
+  }
+
 }

@@ -4,12 +4,10 @@ import 'package:csse/views/view_all_passengers.dart';
 import 'package:csse/views/view_all_turns.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class Profile extends StatefulWidget {
-  Profile();
   @override
   State<StatefulWidget> createState() {
     return _ProfileState();
@@ -18,11 +16,11 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   String _busRef = "";
-  String driver = "";
-  String regNo = "";
-  int routeNo = 0;
-  int totPassengers = 0;
-  int turns = 0;
+  String _driver = "";
+  String _regNo = "";
+  int _routeNo = 0;
+  int _totPassengers = 0;
+  int _turns = 0;
   BaseAuth _auth = Auth();
   @override
   void initState() {
@@ -30,9 +28,10 @@ class _ProfileState extends State<Profile> {
     _auth.currentUser().then((FirebaseUser user){
       Firestore.instance.collection("inspectors").document(user.uid).get()
           .then((DocumentSnapshot documentSnapshot){
-            setState(() {
-              _busRef = documentSnapshot.data['bus'];
-            });
+            if(mounted)
+              setState(() {
+                _busRef = documentSnapshot.data['bus'];
+              });
       });
     });
   }
@@ -91,9 +90,9 @@ class _ProfileState extends State<Profile> {
                           child: Text("Loading..."),
                         );
                       }
-                      driver = snapshot.data["driver"];
-                      regNo = snapshot.data["regNo"];
-                      routeNo = snapshot.data["route"];
+                      _driver = snapshot.data["driver"];
+                      _regNo = snapshot.data["regNo"];
+                      _routeNo = snapshot.data["route"];
 
                       Firestore.instance
                           .collection("turns")
@@ -102,7 +101,7 @@ class _ProfileState extends State<Profile> {
                           .then((QuerySnapshot snapshot) {
                             if(mounted) {
                               setState(() {
-                                turns = snapshot.documents.length;
+                                _turns = snapshot.documents.length;
                               });
                             }
                       });
@@ -112,7 +111,7 @@ class _ProfileState extends State<Profile> {
                           .where('bus', isEqualTo: _busRef)
                           .getDocuments()
                           .then((QuerySnapshot snapshot) {
-                          totPassengers = snapshot.documents.length;
+                          _totPassengers = snapshot.documents.length;
                       });
 
                       return Card(
@@ -127,7 +126,7 @@ class _ProfileState extends State<Profile> {
                             Expanded(
                               child: Center(
                                 child: Text(
-                                  "$regNo".toUpperCase(),
+                                  "$_regNo".toUpperCase(),
                                   style: Theme.of(context).textTheme.title,
                                 ),
                               ),
@@ -137,13 +136,13 @@ class _ProfileState extends State<Profile> {
                             ),
                             Expanded(
                               child: Text(
-                                "RouteNo :$routeNo",
+                                "RouteNo :$_routeNo",
                                 style: TextStyle(color: Colors.grey.shade500),
                               ),
                             ),
                             Expanded(
                               child: Text(
-                                "Mr. $driver",
+                                "Mr. $_driver",
                                 style: TextStyle(
                                     fontSize: 17, fontWeight: FontWeight.bold),
                               ),
@@ -156,7 +155,7 @@ class _ProfileState extends State<Profile> {
                                   Expanded(
                                     child: ListTile(
                                       title: Text(
-                                        "$totPassengers",
+                                        "$_totPassengers",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold),
@@ -168,7 +167,7 @@ class _ProfileState extends State<Profile> {
                                   Expanded(
                                     child: ListTile(
                                       title: Text(
-                                        "$turns",
+                                        "$_turns",
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold),
@@ -247,10 +246,10 @@ class _ProfileState extends State<Profile> {
                   child: Text("Loading..."),
               );
             }else{
-              turns = snapshot.data.documents.length;
+              _turns = snapshot.data.documents.length;
               return ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: turns,
+                itemCount: _turns,
                 itemBuilder: (context,index){
                   return turnListItem(context,snapshot.data.documents[index]);
                 },
@@ -307,7 +306,7 @@ class _ProfileState extends State<Profile> {
   
   Widget passengerCollection(){
     return Container(
-      height: 200,
+      height: 210,
       child: StreamBuilder(
         stream: Firestore.instance.collection("rides").where("bus",isEqualTo: _busRef).orderBy('status',descending: false).snapshots(),
         builder: (context, snapshot){

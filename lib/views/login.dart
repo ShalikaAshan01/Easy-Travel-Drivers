@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/auth/auth.dart';
-import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
@@ -18,7 +16,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  double imgSize = 150;
+  double _imgSize = 150;
   String _textFieldText = "Phone number";
   String _labelText = "+94";
   String _button = "login";
@@ -45,8 +43,8 @@ class _LoginState extends State<Login> {
             children: <Widget>[
               SizedBox(
                 child: Image.asset('assets/img/logo.png'),
-                height: imgSize,
-                width: imgSize,
+                height: _imgSize,
+                width: _imgSize,
               ),
               Container(
                 child: Row(
@@ -140,7 +138,7 @@ class _LoginState extends State<Login> {
   }
 
   void _verifyPhoneNumber() async {
-    showDialog(context: context, builder: (context) {
+    showDialog(barrierDismissible: false,context: context, builder: (context) {
       return simpleDialog;
     });
     final PhoneVerificationCompleted verificationCompleted =
@@ -197,7 +195,7 @@ class _LoginState extends State<Login> {
   }
 
   void signInWithPhoneNumber() async {
-    showDialog(context: context, builder: (context) {
+    showDialog(barrierDismissible: false,context: context, builder: (context) {
       return simpleDialog;
     });
     final AuthCredential credential = PhoneAuthProvider.getCredential(

@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/auth/auth.dart';
-import 'package:csse/views/home.dart';
-import 'package:csse/views/my_bottom_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/material.dart';
 import 'package:qr_mobile_vision/qr_camera.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
@@ -19,10 +16,10 @@ class QrScanner extends StatefulWidget{
 
 class _QrScanner extends State<QrScanner>{
   String _busRef;
-  String turnId = "";
-  bool isValid = false;
-  bool isStarted = false;
-  String text = "Scan Passengers QR Code";
+  String _turnId = "";
+  bool _isValid = false;
+  bool _isStarted = false;
+  String _text = "Scan Passengers QR Code";
   BaseAuth _auth = Auth();
 
   @override
@@ -46,14 +43,11 @@ class _QrScanner extends State<QrScanner>{
       body: Column(
         children: <Widget>[
           Container(
-            height: 600.0,
-            child: isValid?Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: _isValid?Container(
               child: QrCamera(
                 qrCodeCallback: (code){
-//                Navigator.pushReplacement(context,
-//                    MaterialPageRoute(builder: (context)=>MyBottomNavigationBar()));
                   validateCode(code).then((bool val){
-//                    isValid = false
                   if(val){
                     addNewPassenger(code);
                   }
@@ -75,7 +69,7 @@ class _QrScanner extends State<QrScanner>{
                   child: Padding(
                     padding: EdgeInsets.all(15.0),
                     child: Text(
-                        text,
+                        _text,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16.0,
@@ -100,14 +94,14 @@ class _QrScanner extends State<QrScanner>{
     }else if(snapshot.data['status']=="previous"|| snapshot.data['status']=="cancelled"){
       return false;
     }
-    isStarted = snapshot.data['status'] == "ongoing";
+    _isStarted = snapshot.data['status'] == "ongoing";
     return true;
   }
 
   void _showAlert(bool res){
     String title = "Great";
     String content = "New Passenger was added";
-    if(isStarted){
+    if(_isStarted){
       title = "GoodBye";
       content = "Thank you. Come Again";
     }else if(!res){
@@ -137,8 +131,8 @@ class _QrScanner extends State<QrScanner>{
 
      if(snapshot.documents.length == 0){
        setState(() {
-         isValid = false;
-         text = "Please update turn information";
+         _isValid = false;
+         _text = "Please update turn information";
        });
        Alert(
          context: context,
@@ -159,22 +153,22 @@ class _QrScanner extends State<QrScanner>{
      }
      else{
        DocumentSnapshot documentSnapshot = docs.first;
-       turnId = documentSnapshot.documentID;
+       _turnId = documentSnapshot.documentID;
        setState(() {
-         isValid = true;
+         _isValid = true;
        });
      }
   }
 
   void addNewPassenger(String code)async{
-    isValid = false;
-    if(!isStarted){
+    _isValid = false;
+    if(!_isStarted){
       DocumentReference ref = Firestore.instance.collection('rides').document(code);
 
       var list = List<DocumentReference>();
 
       list.add(ref);
-      await Firestore.instance.collection('turns').document(turnId).updateData({
+      await Firestore.instance.collection('turns').document(_turnId).updateData({
         "passengers":FieldValue.arrayUnion(list),
       });
       await Firestore.instance.collection('rides').document(code).updateData({

@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:app_settings/app_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csse/auth/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,8 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
-import 'package:flutter/services.dart';
 
 class MyMap extends StatefulWidget {
   @override
@@ -20,15 +16,11 @@ class MyMap extends StatefulWidget {
 }
 
 class _MyMapState extends State<MyMap> {
-  String _busRef;
+  String _busRef="";
   StreamSubscription<Position> _positionStreamSubscription;
   Position _position = Position();
   Placemark _placemark;
   String _address = '';
-
-  /// the internet connectivity status
-  bool isOnline = true;
-
   GoogleMapController mapController;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
   LatLng _latLng = LatLng(7.8731, 80.7718);
@@ -203,12 +195,6 @@ class _MyMapState extends State<MyMap> {
   }
 
   void addMarker(){
-//    MarkerId id = MarkerId("fsefse");
-//    final Marker marker = Marker(
-//        markerId: id,
-//        position: _latLng,
-//        infoWindow: InfoWindow(title: "Las"),
-//        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
 
     Firestore.instance
         .collection('turns')
@@ -220,27 +206,24 @@ class _MyMapState extends State<MyMap> {
           if(snapshot.documents.length != 0){
             DocumentSnapshot documentSnapshot = snapshot.documents.last;
 
-//          DocumentReference reference = documentSnapshot.data['passengers'];
             List<dynamic> array = documentSnapshot.data['passengers'];
 
             for(int i=0; i < array.length; i++){
               DocumentReference dRef =  array.elementAt(i);
               dRef.get().then((DocumentSnapshot dSnap){
-                GeoPoint geoPoint = dSnap['endPointCoordinate'];
-                MarkerId id = MarkerId(dSnap.documentID);
-                final Marker marker = Marker(
-                    markerId: id,
-                    position: LatLng(geoPoint.latitude,geoPoint.longitude),
-                    infoWindow: InfoWindow(title: dSnap['end_point']),
-                    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
-                markers[id] = marker;
+                if(dSnap.data['status']=="ongoing" && dSnap.data['endPointCoordinate'] != null){
+                  GeoPoint geoPoint = dSnap.data['endPointCoordinate'];
+                  MarkerId id = MarkerId(dSnap.documentID);
+                  final Marker marker = Marker(
+                      markerId: id,
+                      position: LatLng(geoPoint.latitude,geoPoint.longitude),
+                      infoWindow: InfoWindow(title: dSnap['end_point']),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
+                  markers[id] = marker;
+                }
               });
             }
           }
-
-//          DocumentSnapshot data = await reference.get();
-//          debugPrint(reference.last.toString());
-
     });
 
   }

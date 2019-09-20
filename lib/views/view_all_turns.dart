@@ -13,7 +13,7 @@ class ViewAllTurns extends StatefulWidget{
 }
 
 class _ViewAllTurnsState extends State<ViewAllTurns>{
-  String _busRef;
+  String _busRef="";
   BaseAuth _auth = Auth();
   @override
   void initState() {
@@ -51,8 +51,20 @@ class _ViewAllTurnsState extends State<ViewAllTurns>{
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return Center(
-                child: Text("Loading..."),
-              );
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Center(child: CircularProgressIndicator()),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Loading...",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ));
             }else{
               return ListView.builder(
                 itemCount: snapshot.data.documents.length,
