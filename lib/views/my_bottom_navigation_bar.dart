@@ -466,5 +466,10 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     }
     return isConnected;
   }
+  @override
+  void dispose() {
+    super.dispose();
+    _connectivitySubscription.cancel();
+  }
 
 }
