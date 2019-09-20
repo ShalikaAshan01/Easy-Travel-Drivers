@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:csse/auth/auth.dart';
 import 'package:csse/utils/permissions.dart';
 import 'package:csse/views/home.dart';
@@ -13,6 +16,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:flutter/services.dart';
 
 class MyBottomNavigationBar extends StatefulWidget{
   final BaseAuth auth;
@@ -35,6 +39,9 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   DocumentReference _turnRef;
   AuthStatus _authStatus = AuthStatus.notSignedIn;
   Permissions _permissions = Permissions();
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  bool isOnline = true;
 
   static  List<Widget> _widgetOptions = <Widget>[
     Home(),
@@ -45,6 +52,37 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   @override
   void initState() {
     super.initState();
+
+    ///check connection
+    initConnectivity();
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) async {
+      await _updateConnectionStatus().then((bool isConnected) => setState(() {
+        isOnline = isConnected;
+        if (!isConnected) {
+          Alert(
+            context: context,
+            title: "Whoops",
+            desc:
+            "Slow or no internet connection. Please check internet connection",
+            buttons: [
+              DialogButton(
+                child: Text(
+                  "Ok",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  AppSettings.openWIFISettings();
+                },
+                width: 120,
+              )
+            ],
+          ).show();
+        }
+      }));
+    });
 
     ///Check permissions
 
@@ -391,4 +429,42 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
       ],
     ).show();
   }
+
+  /// initialize connectivity checking
+  /// Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initConnectivity() async {
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      await _connectivity.checkConnectivity();
+    } on PlatformException catch (e) {
+      print(e.toString());
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) {
+      return;
+    }
+
+    await _updateConnectionStatus().then((bool isConnected) => setState(() {
+      isOnline = isConnected;
+    }));
+  }
+
+  Future<bool> _updateConnectionStatus() async {
+    bool isConnected;
+    try {
+      final List<InternetAddress> result =
+      await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        isConnected = true;
+      }
+    } on SocketException catch (_) {
+      isConnected = false;
+      return false;
+    }
+    return isConnected;
+  }
+
 }
