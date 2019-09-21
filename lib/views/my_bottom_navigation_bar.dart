@@ -20,16 +20,13 @@ import 'package:flutter/services.dart';
 
 class MyBottomNavigationBar extends StatefulWidget{
   final BaseAuth auth;
-  MyBottomNavigationBar({this.auth});
+  final VoidCallback onSignOut;
+  MyBottomNavigationBar({this.auth, this.onSignOut});
   @override
   State<StatefulWidget> createState() {
     return _NavigationBarState();
   }
 
-}
-enum AuthStatus{
-  notSignedIn,
-  signedIn
 }
 
 class _NavigationBarState extends State<MyBottomNavigationBar>{
@@ -37,7 +34,6 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
   int _selectedIndex = 0;
   bool _validTurn = false;
   DocumentReference _turnRef;
-  AuthStatus _authStatus = AuthStatus.notSignedIn;
   Permissions _permissions = Permissions();
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<ConnectivityResult> _connectivitySubscription;
@@ -124,9 +120,6 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     });
 
     widget.auth.currentUser().then((FirebaseUser user){
-      setState(() {
-        _authStatus = user == null ? AuthStatus.notSignedIn: AuthStatus.signedIn;
-      });
 
       if(user != null){
         Firestore.instance.collection('inspectors').document(user.uid).get()
@@ -162,6 +155,15 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
 
     });
   }
+  void _signOut() async {
+    try {
+      await widget.auth.signOut();
+      widget.onSignOut();
+    } catch (e) {
+      print(e);
+    }
+
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -171,12 +173,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
 
   @override
   Widget build(BuildContext context) {
-
-    if(_authStatus == AuthStatus.notSignedIn){
-      return Login(auth: widget.auth,onSignedIn: _signedIn ,);
-    }else{
       return buildScaffold();
-    }
   }
 
   Widget buildScaffold(){
@@ -268,11 +265,7 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
     );
   }
 
-  void _signedIn(){
-    setState(() {
-      _authStatus = AuthStatus.signedIn;
-    });
-  }
+
 
   void showAlert(){
     // set up the button
@@ -391,16 +384,6 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
           });
         }
       });
-  }
-  void _signOut()async{
-    try {
-      await widget.auth.signOut();
-      setState(() {
-        _authStatus = AuthStatus.notSignedIn;
-      });
-    } on Exception catch (e) {
-      print(e);
-    }
   }
 
   void permissionAlert(String permissionType){
