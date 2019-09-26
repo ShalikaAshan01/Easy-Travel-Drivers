@@ -49,8 +49,20 @@ class _HomeState extends State<Home> {
           return _buildList(documentSnapshot);
         }
         return Center(
-          child: Text("No Data Found"),
-        );
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Center(child: CircularProgressIndicator()),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "Loading...",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              ],
+            ));
       },
     );
   }
@@ -96,7 +108,12 @@ class _HomeState extends State<Home> {
             }
             String startPoint = data['startPoint'];
             String endPoint = data['endPoint'];
-            String time = DateFormat.Hms().format(data['startTime'].toDate());
+            String time;
+            try {
+              time =  DateFormat.Hms().format(data['startTime'].toDate());
+            } on Exception catch (e) {
+              print(e);
+            }
             String ticketAmount = data['ticketAmount'].toString();
 
             return Container(
