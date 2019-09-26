@@ -7,7 +7,6 @@ import 'package:connectivity/connectivity.dart';
 import 'package:csse/auth/auth.dart';
 import 'package:csse/utils/permissions.dart';
 import 'package:csse/views/home.dart';
-import 'package:csse/views/login.dart';
 import 'package:csse/views/map.dart';
 import 'package:csse/views/profile.dart';
 import 'package:csse/views/qr_scanner.dart';
