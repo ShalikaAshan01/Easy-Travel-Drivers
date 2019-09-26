@@ -19,7 +19,6 @@ class _MyMapState extends State<MyMap> {
   String _busRef="";
   StreamSubscription<Position> _positionStreamSubscription;
   Position _position = Position();
-  Placemark _placemark;
   String _address = '';
   GoogleMapController mapController;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};

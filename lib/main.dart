@@ -1,6 +1,7 @@
 import 'package:csse/auth/auth.dart';
 import 'package:csse/views/landing.dart';
 import 'package:csse/views/my_bottom_navigation_bar.dart';
+import 'package:csse/views/root.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +14,7 @@ void main() async{
     MaterialApp(
     debugShowCheckedModeBanner: false,
     home: isFirst == null || isFirst == true ? Landing():
-        MyBottomNavigationBar(auth: Auth(),)
+        Root(auth: Auth(),)
       ),
   );
 

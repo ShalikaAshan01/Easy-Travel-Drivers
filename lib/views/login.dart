@@ -41,10 +41,13 @@ class _LoginState extends State<Login> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              SizedBox(
-                child: Image.asset('assets/img/logo.png'),
-                height: _imgSize,
-                width: _imgSize,
+              Padding(
+                padding: EdgeInsets.only(bottom: 50),
+                child: SizedBox(
+                  child: Image.asset('assets/img/logo.png'),
+                  height: _imgSize,
+                  width: _imgSize,
+                ),
               ),
               Container(
                 child: Row(
@@ -223,6 +226,7 @@ class _LoginState extends State<Login> {
         }
 
     } on Exception catch (e) {
+      print(e);
       Navigator.pop(context);
       errorAlert("Invalid OTP");
     }
@@ -242,11 +246,11 @@ class _LoginState extends State<Login> {
           ),
           onPressed: () {
             setState(() {
-              String _textFieldText = "Phone number";
-              String _labelText = "+94";
-              String _button = "login";
-              String _text = "Login with your phone number";
-              bool _isOTP = false;
+              _textFieldText = "Phone number";
+              _labelText = "+94";
+              _button = "login";
+              _text = "Login with your phone number";
+              _isOTP = false;
               _controller.clear();
               Navigator.pop(context);
             });

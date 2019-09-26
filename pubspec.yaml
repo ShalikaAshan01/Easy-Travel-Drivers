@@ -36,6 +36,7 @@ dependencies:
   cloud_firestore: ^0.12.9+3
   flare_flutter: ^1.5.8
   shared_preferences: ^0.5.3+4
+  flutter_launcher_icons: ^0.7.3
 
 
 dev_dependencies:
@@ -85,3 +86,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+flutter_icons:
+  ios: true
+  android: true
+  image_path_ios: "assets/launcher/icon.png"
+  image_path_android: "assets/launcher/icon.png"

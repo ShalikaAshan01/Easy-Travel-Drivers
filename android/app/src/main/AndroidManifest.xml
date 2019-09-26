@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="csse"
+        android:label="Easy Travel Drivers"
         android:icon="@mipmap/ic_launcher">
 
 
