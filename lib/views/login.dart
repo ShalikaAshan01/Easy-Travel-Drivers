@@ -41,10 +41,13 @@ class _LoginState extends State<Login> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              SizedBox(
-                child: Image.asset('assets/img/logo.png'),
-                height: _imgSize,
-                width: _imgSize,
+              Padding(
+                padding: EdgeInsets.only(bottom: 50),
+                child: SizedBox(
+                  child: Image.asset('assets/img/logo.png'),
+                  height: _imgSize,
+                  width: _imgSize,
+                ),
               ),
               Container(
                 child: Row(
