@@ -53,11 +53,11 @@ class _HomeState extends State<Home> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                Center(child: CircularProgressIndicator()),
+//                Center(child: CircularProgressIndicator()),
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    "Loading...",
+                    "Please Add New Turn...",
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 )

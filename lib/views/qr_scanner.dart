@@ -21,6 +21,7 @@ class _QrScanner extends State<QrScanner>{
   bool _isStarted = false;
   String _text = "Scan Passengers QR Code";
   BaseAuth _auth = Auth();
+  String _routeNo = "";
 
   @override
   void initState() {
@@ -94,6 +95,11 @@ class _QrScanner extends State<QrScanner>{
     }else if(snapshot.data['status']=="previous"|| snapshot.data['status']=="cancelled"){
       return false;
     }
+    if(snapshot.data['route']!=_routeNo){
+      return false;
+    }
+
+
     _isStarted = snapshot.data['status'] == "ongoing";
     return true;
   }
@@ -106,7 +112,7 @@ class _QrScanner extends State<QrScanner>{
       content = "Thank you. Come Again";
     }else if(!res){
       title = "Whoops";
-      content = "Invalid token.Please recheck and read";
+      content = "Invalid token.Please recheck and read again";
     }
     showMyDialog(title, content);
   }
@@ -154,6 +160,7 @@ class _QrScanner extends State<QrScanner>{
      else{
        DocumentSnapshot documentSnapshot = docs.first;
        _turnId = documentSnapshot.documentID;
+       _routeNo = documentSnapshot.data['route'];
        setState(() {
          _isValid = true;
        });
