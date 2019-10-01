@@ -18,7 +18,7 @@ class _ProfileState extends State<Profile> {
   String _busRef = "";
   String _driver = "";
   String _regNo = "";
-  int _routeNo = 0;
+  String _routeNo = "";
   int _totPassengers = 0;
   int _turns = 0;
   BaseAuth _auth = Auth();
