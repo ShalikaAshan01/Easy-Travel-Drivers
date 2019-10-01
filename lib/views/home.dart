@@ -53,11 +53,11 @@ class _HomeState extends State<Home> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                Center(child: CircularProgressIndicator()),
+//                Center(child: CircularProgressIndicator()),
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    "Loading...",
+                    "Please Add New Turn...",
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 )
@@ -108,12 +108,13 @@ class _HomeState extends State<Home> {
             }
             String startPoint = data['startPoint'];
             String endPoint = data['endPoint'];
-            String time;
-            try {
+            String time="";
+
+
+            if(data['startTime'] != null){
               time =  DateFormat.Hms().format(data['startTime'].toDate());
-            } on Exception catch (e) {
-              print(e);
             }
+
             String ticketAmount = data['ticketAmount'].toString();
 
             return Container(

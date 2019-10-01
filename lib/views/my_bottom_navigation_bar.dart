@@ -326,16 +326,26 @@ class _NavigationBarState extends State<MyBottomNavigationBar>{
             showDialog(context: context, builder: (context) {
               return simpleDialog;
             });
-            Firestore.instance.collection('turns').add({
-              "bus":_busRef,
-              "startTime":DateTime.now(),
-              "status":"ongoing",
-              "passengers": []
-            }).then((DocumentReference docRef){
-              Navigator.pop(context);
-              _turnRef = docRef;
-              _validTurn = true;
+            
+            Firestore.instance.collection('buses').document(_busRef).get()
+            .then((DocumentSnapshot snapshot){
+              String _routeNo = snapshot.data['route'];
+
+              Firestore.instance.collection('turns').add({
+                "bus":_busRef,
+                "startTime":DateTime.now(),
+                "status":"ongoing",
+                "passengers": [],
+                "route":_routeNo
+              }).then((DocumentReference docRef){
+                Navigator.pop(context);
+                _turnRef = docRef;
+                _validTurn = true;
+              });
+
             });
+            
+
           }
         });
       },

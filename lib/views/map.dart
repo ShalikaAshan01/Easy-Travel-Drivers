@@ -35,6 +35,7 @@ class _MyMapState extends State<MyMap> {
               setState(() {
                 _busRef = documentSnapshot.data['bus'];
               });
+            addMarker();
       });
     });
     _listening();
@@ -82,15 +83,6 @@ class _MyMapState extends State<MyMap> {
       return Container(
         child: Column(
           children: <Widget>[
-            RaisedButton(
-              child: Text("Show Landmarks"),
-              color: Colors.green,
-              onPressed: (){
-                setState(() {
-                  addMarker();
-                });
-              },
-            ),
             Text(_address),
             Expanded(
                 child: GoogleMap(
@@ -98,7 +90,7 @@ class _MyMapState extends State<MyMap> {
                 mapController = controller;
               },
               initialCameraPosition:
-                  CameraPosition(target: _latLng, zoom: 20.0),
+                  CameraPosition(target: _latLng, zoom: 10.0),
               myLocationEnabled: true,
                   markers: Set<Marker>.of(markers.values),
             ))
@@ -195,35 +187,60 @@ class _MyMapState extends State<MyMap> {
 
   void addMarker(){
 
-    Firestore.instance
-        .collection('turns')
-        .where('bus', isEqualTo: _busRef)
-        .where('status',isEqualTo: 'ongoing')
-        .limit(1)
-        .snapshots().listen((QuerySnapshot snapshot) async {
-
-          if(snapshot.documents.length != 0){
-            DocumentSnapshot documentSnapshot = snapshot.documents.last;
-
-            List<dynamic> array = documentSnapshot.data['passengers'];
-
-            for(int i=0; i < array.length; i++){
-              DocumentReference dRef =  array.elementAt(i);
-              dRef.get().then((DocumentSnapshot dSnap){
-                if(dSnap.data['status']=="ongoing" && dSnap.data['endPointCoordinate'] != null){
-                  GeoPoint geoPoint = dSnap.data['endPointCoordinate'];
-                  MarkerId id = MarkerId(dSnap.documentID);
-                  final Marker marker = Marker(
-                      markerId: id,
+    Firestore.instance.collection('buses').document(_busRef).get()
+        .then((DocumentSnapshot snapshot){
+       String _routeNo = snapshot.data['route'];
+       
+       Firestore.instance.collection('routes').document(_routeNo)
+           .collection('points').getDocuments()
+       .then((QuerySnapshot querySnapshot){
+         List<DocumentSnapshot> documents = querySnapshot.documents;
+         for(int i=0; i<documents.length; i++){
+           DocumentSnapshot doc = documents[i];
+           GeoPoint geoPoint = doc.data["location"];
+           MarkerId markerId = MarkerId(doc.data['name']);
+           final Marker marker = Marker(
+                      markerId: markerId,
                       position: LatLng(geoPoint.latitude,geoPoint.longitude),
-                      infoWindow: InfoWindow(title: dSnap['end_point']),
+                      infoWindow: InfoWindow(title: doc.data['name']),
                       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
-                  markers[id] = marker;
+                  markers[markerId] = marker;
                 }
-              });
-            }
-          }
+
+         
+       });
+       
     });
+
+//    Firestore.instance
+//        .collection('turns')
+//        .where('bus', isEqualTo: _busRef)
+//        .where('status',isEqualTo: 'ongoing')
+//        .limit(1)
+//        .snapshots().listen((QuerySnapshot snapshot) async {
+//
+//          if(snapshot.documents.length != 0){
+//            DocumentSnapshot documentSnapshot = snapshot.documents.last;
+//
+//            List<dynamic> array = documentSnapshot.data['passengers'];
+//
+//            for(int i=0; i < array.length; i++){
+//              DocumentReference dRef =  array.elementAt(i);
+//              dRef.get().then((DocumentSnapshot dSnap){
+//                if(dSnap.data['status']=="ongoing" && dSnap.data['endPointCoordinate'] != null){
+//                  GeoPoint geoPoint = dSnap.data['endPointCoordinate'];
+//                  MarkerId id = MarkerId(dSnap.documentID);
+//                  final Marker marker = Marker(
+//                      markerId: id,
+//                      position: LatLng(geoPoint.latitude,geoPoint.longitude),
+//                      infoWindow: InfoWindow(title: dSnap['end_point']),
+//                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed));
+//                  markers[id] = marker;
+//                }
+//              });
+//            }
+//          }
+//    });
 
   }
 }
